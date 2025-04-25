@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: bfeef1b481c87144a878e4c8d04d1722
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 169254
+  packageName: Map Tile Grid Creator
+  packageVersion: 1.0
+  assetPath: Assets/MapTileGridCreator/Editor/SerializeSystem/CellDTO.cs
+  uploadId: 373927
