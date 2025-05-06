@@ -1,0 +1,45 @@
+{
+    "name": "Pallet",
+    "maps": [
+        {
+            "name": "New action map",
+            "id": "d0ebe8cb-cabe-4dc7-9019-08cea8322355",
+            "actions": [
+                {
+                    "name": "Move",
+                    "type": "Button",
+                    "id": "38954b2e-3ba4-4d6c-ad2c-ec79018cbc41",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "b45ad045-303b-45e5-850b-273e21c8b21b",
+                    "path": "<Keyboard>/leftArrow",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Move",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "45d6b0e6-3181-49ae-8bc6-be7d497435a7",
+                    "path": "<Keyboard>/rightArrow",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Move",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}
