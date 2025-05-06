@@ -4,8 +4,8 @@ using UnityEngine.InputSystem;
 public class BallController : MonoBehaviour
 {
     [Header("Ball Settings")]
-    [SerializeField] private float initialSpeed = 5f;
-    [SerializeField] private float maxSpeed = 15f;
+    [SerializeField] private float initialSpeed = 10f;
+    [SerializeField] private float maxSpeed = 20f;
     [SerializeField] private Vector3 initialDirection = new Vector3(1f, 0f, 1f).normalized;
     [SerializeField] private float hitForce = 1.1f; // Optional: increase ball speed slightly on each hit
 
@@ -111,6 +111,6 @@ public class BallController : MonoBehaviour
         transform.position = position;
         rb.linearVelocity = Vector3.zero;
         gameStarted = false;
-        initialSpeed = 5f; // Reset to initial speed
+        initialSpeed = 10f; // Reset to initial speed
     }
 }

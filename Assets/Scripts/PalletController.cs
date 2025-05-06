@@ -8,6 +8,13 @@ public class PalletController : MonoBehaviour
     [SerializeField] private float limiteDerecho = 8f;  // Límite derecho del movimiento
     
     private Vector2 movimientoInput;
+    private Vector3 initialPosition;
+    
+    private void Start()
+    {
+        // Store initial position
+        initialPosition = transform.position;
+    }
     
     private void Update()
     {
@@ -30,5 +37,11 @@ public class PalletController : MonoBehaviour
     public void OnMove(InputValue value)
     {
         movimientoInput = value.Get<Vector2>();
+    }
+    
+    // Method to reset the paddle position
+    public void ResetPosition()
+    {
+        transform.position = initialPosition;
     }
 }
