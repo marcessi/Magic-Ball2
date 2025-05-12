@@ -3044,8 +3044,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 883c41b6ebdddc54eb529f9f22082590, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  initialSpeed: 10
-  maxSpeed: 20
+  initialSpeed: 5
+  maxSpeed: 15
   initialDirection: {x: 1, y: 0, z: 1}
   hitForce: 1.1
 --- !u!4 &709660849 stripped
