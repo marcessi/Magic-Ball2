@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class BlockController : MonoBehaviour
@@ -10,11 +11,57 @@ public class BlockController : MonoBehaviour
     [SerializeField] private float breakAnimationDuration = 0.5f;
     [SerializeField] private float blockHeight = 1f; // Height of each block level
     
+    [Header("PowerUp Settings")]
+    [SerializeField] private bool enablePowerUps = true;
+    [SerializeField, Range(0f, 1f)] private float powerUpChance = 0.3f;
+    
+    // Variables para el seguimiento de bloques
+    private static int totalBlocksInitial = 0;
+    private static int blocksDestroyed = 0;
+    private static bool isInitialized = false;
+    
+    // Lista de tipos de powerups
+    private enum PowerUpType 
+    { 
+        ExpandPaddle,    // "more" - Agranda la paleta
+        ShrinkPaddle,    // "less" - Reduce la paleta
+        PowerBall,       // Bola que atraviesa los bloques
+        NormalBall,      // Restaura la bola al modo normal
+        ExtraBalls,      // Añade dos bolas extra
+        Magnet,          // La bola se pega a la paleta
+        NextLevel        // Pasa al siguiente nivel
+    }
+    
+    // Diccionario que mapea tipos a nombres de prefab
+    private Dictionary<PowerUpType, string> powerUpPrefabNames = new Dictionary<PowerUpType, string>()
+    {
+        { PowerUpType.ExpandPaddle, "more" },
+        { PowerUpType.ShrinkPaddle, "less" },
+        { PowerUpType.PowerBall, "powerball" },
+        { PowerUpType.NormalBall, "normalball" },
+        { PowerUpType.ExtraBalls, "extraballs" },
+        { PowerUpType.Magnet, "magnet" },
+        { PowerUpType.NextLevel, "nextlevel" }
+    };
+    
+    // Variables existentes
     private bool isBreaking = false;
     private bool isLowLevel = false;
     private bool shouldDescend = false;
     private bool isDescending = false;
     private Vector3 targetPosition;
+    
+    private void Awake()
+    {
+        // Inicializar contador de bloques solo una vez por nivel
+        if (!isInitialized)
+        {
+            totalBlocksInitial = FindObjectsOfType<BlockController>().Length;
+            blocksDestroyed = 0;
+            isInitialized = true;
+            Debug.Log($"Nivel inicializado con {totalBlocksInitial} bloques");
+        }
+    }
     
     private void Start()
     {
@@ -76,17 +123,33 @@ public class BlockController : MonoBehaviour
         }
     }
     
+    // Método llamado cuando un bloque es destruido
+    public void Hit()
+    {
+        // Si el bloque ya está en proceso de destrucción, ignoramos
+        if (isBreaking)
+            return;
+
+        // Incrementar contador de bloques destruidos
+        blocksDestroyed++;
+        Debug.Log($"Bloque destruido. Total: {blocksDestroyed}/{totalBlocksInitial} " +
+                  $"({GetDestroyedPercentage():F1}%)");
+
+        // Iniciar la animación de destrucción
+        StartCoroutine(BreakAnimation());
+    }
+    
     private IEnumerator BreakAnimation()
     {
         isBreaking = true;
         
-        // Play break effect/animation
+        // Animation code...
         if (breakEffect != null)
         {
             Instantiate(breakEffect, transform.position, Quaternion.identity);
         }
         
-        // Visual breaking animation (e.g., scale down and rotate)
+        // Visual breaking animation
         Vector3 originalScale = transform.localScale;
         Quaternion originalRotation = transform.rotation;
         float elapsed = 0f;
@@ -107,9 +170,88 @@ public class BlockController : MonoBehaviour
         
         // Notify blocks above to descend
         NotifyBlocksAbove();
+
+        // Lógica de generación de powerups con probabilidad
+        if (enablePowerUps && Random.value <= powerUpChance)
+        {
+            SpawnRandomPowerUp();
+        }
         
         // Destroy the block
         Destroy(gameObject);
+    }
+    
+    private void SpawnRandomPowerUp()
+    {
+        // Elegir un tipo de powerup basado en probabilidades
+        PowerUpType selectedType = SelectPowerUpType();
+        
+        // Obtener el nombre del prefab
+        string prefabName = powerUpPrefabNames[selectedType];
+        
+        // Cargar y crear el powerup
+        GameObject powerupPrefab = Resources.Load<GameObject>("Prefabs/" + prefabName);
+        
+        if (powerupPrefab != null)
+        {
+            GameObject powerup = Instantiate(
+                powerupPrefab,
+                transform.position,
+                Quaternion.identity
+            );
+            
+            Debug.Log("PowerUp generado: " + prefabName);
+        }
+        else
+        {
+            Debug.LogWarning("No se pudo cargar el prefab: Resources/Prefabs/" + prefabName);
+        }
+    }
+    
+    private PowerUpType SelectPowerUpType()
+    {
+        // Verificar si se puede generar el powerup NextLevel
+        bool canGenerateNextLevel = GetDestroyedPercentage() >= 95f;
+        
+        // Lista de tipos disponibles, excluyendo NextLevel si no se cumple la condición
+        List<PowerUpType> availableTypes = new List<PowerUpType>();
+        
+        foreach (PowerUpType type in System.Enum.GetValues(typeof(PowerUpType)))
+        {
+            // Solo incluir NextLevel si se ha destruido más del 95% de los bloques
+            if (type != PowerUpType.NextLevel || canGenerateNextLevel)
+            {
+                availableTypes.Add(type);
+            }
+        }
+        
+        // Si NextLevel está disponible, darle menor probabilidad
+        if (canGenerateNextLevel)
+        {
+            // Añadir tipos comunes múltiples veces para aumentar su probabilidad relativa
+            // NextLevel solo aparece una vez en la lista, los demás aparecen 3 veces
+            List<PowerUpType> weightedTypes = new List<PowerUpType>(availableTypes);
+            
+            foreach (PowerUpType type in availableTypes)
+            {
+                if (type != PowerUpType.NextLevel)
+                {
+                    // Añadir cada tipo común 2 veces más (total 3 apariciones)
+                    weightedTypes.Add(type);
+                    weightedTypes.Add(type);
+                }
+            }
+            
+            // Seleccionar aleatoriamente de la lista ponderada
+            int randomIndex = Random.Range(0, weightedTypes.Count);
+            return weightedTypes[randomIndex];
+        }
+        else
+        {
+            // Seleccionar aleatoriamente entre los tipos disponibles (sin NextLevel)
+            int randomIndex = Random.Range(0, availableTypes.Count);
+            return availableTypes[randomIndex];
+        }
     }
     
     private void NotifyBlocksAbove()
@@ -136,5 +278,22 @@ public class BlockController : MonoBehaviour
     public void StartDescending()
     {
         shouldDescend = true;
+    }
+
+    // Método para obtener el porcentaje de bloques destruidos
+    private float GetDestroyedPercentage()
+    {
+        if (totalBlocksInitial == 0)
+            return 0;
+            
+        return (float)blocksDestroyed / totalBlocksInitial * 100f;
+    }
+
+    // Método para reiniciar los contadores estáticos cuando se cambia de nivel
+    public static void ResetLevelCounters()
+    {
+        totalBlocksInitial = 0;
+        blocksDestroyed = 0;
+        isInitialized = false;
     }
 }
