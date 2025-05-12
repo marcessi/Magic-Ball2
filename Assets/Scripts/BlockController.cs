@@ -65,6 +65,12 @@ public class BlockController : MonoBehaviour
     
     private void Start()
     {
+        // Round x and z positions to nearest 0.5 units
+        Vector3 position = transform.position;
+        position.x = Mathf.Round(position.x * 2) / 2; // Round to nearest 0.5
+        position.z = Mathf.Round(position.z * 2) / 2; // Round to nearest 0.5
+        transform.position = position;
+        
         // Initialize block level based on y position
         blockLevel = Mathf.RoundToInt(transform.position.y / blockHeight);
         
