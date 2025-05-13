@@ -370,6 +370,8 @@ MonoBehaviour:
   velocidad: 15
   limiteIzquierdo: -8.5
   limiteDerecho: 9.5
+  maxScaleFactor: 2
+  minScaleFactor: 0.5
 --- !u!23 &49238720
 MeshRenderer:
   m_ObjectHideFlags: 0
