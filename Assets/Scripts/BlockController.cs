@@ -10,6 +10,7 @@ public class BlockController : MonoBehaviour
     [SerializeField] private GameObject breakEffect; // Particle effect or animation prefab for breaking
     [SerializeField] private float breakAnimationDuration = 0.5f;
     [SerializeField] private float blockHeight = 1f; // Height of each block level
+    [SerializeField] private float pivotOffset = 0f; // Offset for blocks with displaced pivot
     
     [Header("PowerUp Settings")]
     [SerializeField] private bool enablePowerUps = true;
@@ -71,10 +72,10 @@ public class BlockController : MonoBehaviour
         position.z = Mathf.Round(position.z * 2) / 2; // Round to nearest 0.5
         transform.position = position;
         
-        // Initialize block level based on y position
-        blockLevel = Mathf.RoundToInt(transform.position.y / blockHeight);
+        // Initialize block level based on y position, accounting for pivot offset
+        blockLevel = Mathf.RoundToInt((transform.position.y - pivotOffset) / blockHeight);
         
-        // Check if block is at the lowest level (y=0)
+        // Check if block is at the lowest level (y=0 + offset)
         isLowLevel = blockLevel == 0;
         
         // Set initial target position one level down
@@ -112,10 +113,10 @@ public class BlockController : MonoBehaviour
     
     private void UpdateTargetPosition()
     {
-        // Target is one level down from current position
+        // Target is one level down from current position, accounting for pivot offset
         targetPosition = new Vector3(
             transform.position.x,
-            blockLevel > 0 ? (blockLevel - 1) * blockHeight : 0f,
+            blockLevel > 0 ? (blockLevel - 1) * blockHeight + pivotOffset : pivotOffset,
             transform.position.z
         );
     }
@@ -262,22 +263,85 @@ public class BlockController : MonoBehaviour
     
     private void NotifyBlocksAbove()
     {
-        // Cast a ray upwards to find ALL blocks above this one
-        RaycastHit[] hits = Physics.RaycastAll(
-            transform.position,
-            Vector3.up,
-            100f // Increased range to detect all blocks above
+        // Origen del rayo: posición del bloque actual
+        Vector3 rayOrigin = transform.position;
+        
+        // Dirección: hacia arriba
+        Vector3 rayDirection = Vector3.up;
+        
+        // Vector de tamaño de la caja para el BoxCast
+        Vector3 boxSize = new Vector3(0.6f, 0.1f, 0.6f); // Caja delgada pero ancha
+        
+        // Distancia máxima del rayo (bastante alta para alcanzar toda la columna)
+        float maxRayDistance = 20f; // Ajustar según la altura de tu nivel
+        
+        // Lista para almacenar todos los bloques detectados
+        List<BlockController> blocksAbove = new List<BlockController>();
+        
+        // Realizar un BoxCast hacia arriba para detectar todos los bloques
+        RaycastHit[] hits = Physics.BoxCastAll(
+            rayOrigin,        // Origen
+            boxSize * 0.5f,   // Mitad de los extents
+            rayDirection,     // Dirección hacia arriba
+            Quaternion.identity, // Sin rotación
+            maxRayDistance    // Distancia máxima
         );
         
+        Debug.Log($"Buscando TODOS los bloques encima de {transform.position}. Encontrados: {hits.Length}");
+        
+        // Ordenar los resultados por distancia (los más cercanos primero)
+        System.Array.Sort(hits, (hit1, hit2) => hit1.distance.CompareTo(hit2.distance));
+        
+        // Procesar todos los hits encontrados
         foreach (RaycastHit hit in hits)
         {
-            // Check if hit object has a BlockController
             BlockController blockAbove = hit.collider.GetComponent<BlockController>();
-            if (blockAbove != null)
+            if (blockAbove != null && blockAbove != this) // Excluir el propio bloque
             {
-                // Tell the block above to start descending
+                Debug.Log($"Notificando bloque en {blockAbove.transform.position} para descender");
                 blockAbove.StartDescending();
             }
+            else if (hit.collider.gameObject != gameObject) // Excluir este mismo objeto
+            {
+                Debug.Log($"Objeto detectado sin BlockController: {hit.collider.gameObject.name}");
+            }
+        }
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        // Dibuja la caja de detección original (pequeña)
+        Vector3 center = transform.position + Vector3.up * blockHeight + Vector3.up * -pivotOffset;
+        Vector3 halfExtents = new Vector3(0.6f, blockHeight * 0.8f, 0.6f) * 0.5f;
+        Gizmos.color = Color.cyan;
+        Gizmos.matrix = Matrix4x4.TRS(center, Quaternion.identity, Vector3.one);
+        Gizmos.DrawWireCube(Vector3.zero, halfExtents * 2);
+        Gizmos.matrix = Matrix4x4.identity;
+        
+        // Dibuja el BoxCast vertical (columna completa)
+        Gizmos.color = Color.green;
+        Vector3 boxSize = new Vector3(0.6f, 0.1f, 0.6f);
+        Vector3 rayStart = transform.position;
+        Vector3 rayEnd = transform.position + Vector3.up * 20f;
+        
+        // Dibujar la línea central
+        Gizmos.DrawLine(rayStart, rayEnd);
+        
+        // Dibujar las cajas a lo largo del rayo
+        Gizmos.DrawWireCube(rayStart, boxSize);
+        Gizmos.DrawWireCube(rayStart + Vector3.up * 10f, boxSize);
+        Gizmos.DrawWireCube(rayEnd, boxSize);
+        
+        // Dibuja la posición objetivo para el descenso
+        if (blockLevel > 0)
+        {
+            Gizmos.color = Color.yellow;
+            Vector3 targetPos = new Vector3(
+                transform.position.x,
+                (blockLevel - 1) * blockHeight + pivotOffset,
+                transform.position.z
+            );
+            Gizmos.DrawWireSphere(targetPos, 0.3f);
         }
     }
     
