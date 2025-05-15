@@ -8,6 +8,7 @@ TagManager:
   - Limit
   - Powerup
   - Ball
+  - GodModeWall
   layers:
   - Default
   - TransparentFX

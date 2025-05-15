@@ -93,6 +93,8 @@ public class BallController : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
+        Vector3 incomingVelocity = rb.linearVelocity;
+
         // En lugar de verificar el tag, verificamos directamente si tiene el componente BlockController
         BlockController block = collision.gameObject.GetComponent<BlockController>();
         if (block != null)
@@ -106,33 +108,39 @@ public class BallController : MonoBehaviour
             // Damage the block regardless
             block.Hit();
         }
+
+        StartCoroutine(FixBounceAngle(incomingVelocity, collision.contacts[0].normal));
+    }
+
+    private IEnumerator FixBounceAngle(Vector3 incomingVelocity, Vector3 surfaceNormal)
+    {
+        // Wait one frame to let physics engine apply the bounce
+        yield return null;
         
-        // Si es un bloque y estamos en modo PowerBall
-        if (isPowerBall && collision.gameObject.GetComponent<BlockController>() != null)
+        // Get the current velocity after physics has applied the bounce
+        Vector3 currentVelocity = rb.linearVelocity;
+        
+        // Check if we have a "weird bounce" - velocity nearly reversed
+        float bounceAngle = Vector3.Angle(currentVelocity, incomingVelocity);
+        
+        // If the bounce angle is too close to 180 degrees (complete reversal), fix it
+        if (bounceAngle > 160f)
         {
-            // Obtener la dirección actual de la bola antes de la colisión
-            Vector3 direction = rb.linearVelocity.normalized;
+            // Calculate proper reflection vector
+            Vector3 properReflection = Vector3.Reflect(incomingVelocity, surfaceNormal);
             
-            // Ignorar la colisión física para evitar el rebote
-            Physics.IgnoreCollision(GetComponent<Collider>(), collision.collider, true);
+            // Add a small random variation to prevent repetitive patterns
+            Vector3 randomOffset = new Vector3(Random.Range(-0.1f, 0.1f), 0, Random.Range(-0.1f, 0.1f));
+            properReflection += randomOffset;
             
-            // Aplicar daño al bloque
-            BlockController blockController = collision.gameObject.GetComponent<BlockController>();
-            if (blockController != null)
-            {
-                blockController.Hit();
-            }
+            // Apply the corrected velocity
+            rb.linearVelocity = properReflection.normalized * initialSpeed;
             
-            // Asegurar que la bola mantiene su dirección y velocidad
-            rb.linearVelocity = direction * initialSpeed;
+            Debug.Log("Fixed unusual bounce: " + bounceAngle);
         }
-        else
-        {
-            // Comportamiento normal para otros objetos
-            
-            // Ensure the ball doesn't get stuck horizontally or vertically
-            EnsureNonZeroVelocityComponents();
-        }
+        
+        // Now ensure non-zero components
+        EnsureNonZeroVelocityComponents();
     }
     
     private void EnsureNonZeroVelocityComponents()
