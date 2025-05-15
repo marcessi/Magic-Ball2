@@ -7,11 +7,12 @@ public class BallController : MonoBehaviour
     [Header("Ball Settings")]
     [SerializeField] private float initialSpeed = 10f;
     [SerializeField] private float maxSpeed = 20f;
-    [SerializeField] private Vector3 initialDirection = new Vector3(1f, 0f, 1f).normalized;
+    [SerializeField] private Vector3 initialDirection = new Vector3(1f, 0f, 0.5f).normalized;
     [SerializeField] private float hitForce = 1.1f; // Optional: increase ball speed slightly on each hit
 
     private Rigidbody rb;
     private bool gameStarted = false;
+    private Vector3 startPosition;
 
     // Para el modo Power Ball
     private bool isPowerBall = false;
@@ -29,10 +30,18 @@ public class BallController : MonoBehaviour
 
     private void Start()
     {
+        startPosition = transform.position;
         // Initialize ball at rest
         if (rb != null)
         {
             rb.linearVelocity = Vector3.zero;
+        }
+
+        // Find and attach to the paddle at the start of the level
+        PalletController paddle = FindObjectOfType<PalletController>();
+        if (paddle != null)
+        {
+            AttachToPaddle(paddle.transform, paddle);
         }
     }
 
@@ -41,7 +50,7 @@ public class BallController : MonoBehaviour
         // Press Space to launch the ball using the new Input System
         if (!gameStarted && Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
         {
-            LaunchBall();
+            LaunchBall(initialDirection);
         }
 
         // Ensure ball stays at the correct velocity
@@ -55,12 +64,6 @@ public class BallController : MonoBehaviour
         {
             DetachFromPaddle();
         }
-    }
-
-    private void LaunchBall()
-    {
-        gameStarted = true;
-        rb.linearVelocity = initialDirection * initialSpeed;
     }
 
     private void MaintainSpeed()
@@ -166,12 +169,19 @@ public class BallController : MonoBehaviour
     }
     
     // Reset the ball to its initial position and state
-    public void ResetBall(Vector3 position)
+    public void ResetBall()
     {
-        transform.position = position;
+        transform.position = startPosition;
         rb.linearVelocity = Vector3.zero;
         gameStarted = false;
         initialSpeed = 10f; // Reset to initial speed
+        
+        // Find and attach to the paddle at the start of the level
+        PalletController paddle = FindObjectOfType<PalletController>();
+        if (paddle != null)
+        {
+            AttachToPaddle(paddle.transform, paddle);
+        }
     }
 
     // Método para lanzar la bola en una dirección específica
@@ -181,10 +191,6 @@ public class BallController : MonoBehaviour
         Vector3 launchDirection = new Vector3(direction.x, 0, direction.y).normalized;
         rb.linearVelocity = launchDirection * initialSpeed;
     }
-
-    
-
-
 
     // Restaura todas las colisiones ignoradas
     private void RestoreAllCollisions()
@@ -257,8 +263,7 @@ public class BallController : MonoBehaviour
         rb.isKinematic = false;
         
         // Ahora sí podemos establecer la velocidad
-        Vector3 launchDir = new Vector3(Random.Range(-0.5f, 0.5f), 0, 1).normalized;
-        rb.linearVelocity = launchDir * initialSpeed;
+        LaunchBall(initialDirection);
         gameStarted = true;
         
         // Si hay un controlador de paleta, marcar el efecto magnético como usado
