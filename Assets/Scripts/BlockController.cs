@@ -51,6 +51,10 @@ public class BlockController : MonoBehaviour
     private bool shouldDescend = false;
     private bool isDescending = false;
     private Vector3 targetPosition;
+    private float floatingCheckDelay = 0.1f;
+    private float lastFloatingCheck = 0f;
+    private static Dictionary<Vector2, bool> brokenColumns = new Dictionary<Vector2, bool>(); // Rastrea columnas rotas
+    private Vector2 columnPosition; // Posición de la columna (X,Z) de este bloque
     
     private void Awake()
     {
@@ -74,6 +78,17 @@ public class BlockController : MonoBehaviour
         
         // Initialize block level based on y position, accounting for pivot offset
         blockLevel = Mathf.RoundToInt((transform.position.y - pivotOffset) / blockHeight);
+
+        position.x = Mathf.Round(position.x);
+        position.z = Mathf.Round(position.z - 0.5f) + 0.5f;
+
+        // Calculate column position (only X and Z coordinates)
+        columnPosition = new Vector2(position.x, position.z);
+
+        if (!brokenColumns.ContainsKey(columnPosition))
+        {
+        brokenColumns[columnPosition] = false;
+        }
         
         // Check if block is at the lowest level (y=0 + offset)
         isLowLevel = blockLevel == 0;
@@ -87,7 +102,12 @@ public class BlockController : MonoBehaviour
         // If block is in the process of descending
         if (shouldDescend && !isBreaking)
         {
-            isDescending = true;
+            if (!isDescending)
+            {
+                // Antes de iniciar el descenso, calcular la posición más baja posible
+                FindLowestPossiblePosition();
+                isDescending = true;
+            }
             
             // Move block towards target position
             transform.position = Vector3.MoveTowards(
@@ -100,34 +120,166 @@ public class BlockController : MonoBehaviour
             if (Vector3.Distance(transform.position, targetPosition) < 0.01f)
             {
                 transform.position = targetPosition;
-                blockLevel--;
+                // Actualizar el nivel del bloque basado en su nueva posición Y
+                blockLevel = Mathf.RoundToInt((transform.position.y - pivotOffset) / blockHeight);
                 isLowLevel = blockLevel == 0;
                 shouldDescend = false;
                 isDescending = false;
-                
-                // Update target for next potential descent
-                UpdateTargetPosition();
             }
+        }
+
+        lastFloatingCheck += Time.deltaTime;
+        if (lastFloatingCheck >= floatingCheckDelay && !isDescending && !shouldDescend)
+        {
+            CheckIfFloating();
+            lastFloatingCheck = 0f;
         }
     }
     
     private void UpdateTargetPosition()
     {
-        // Target is one level down from current position, accounting for pivot offset
+        // Esta función ahora solo se usa para inicialización
         targetPosition = new Vector3(
             transform.position.x,
             blockLevel > 0 ? (blockLevel - 1) * blockHeight + pivotOffset : pivotOffset,
             transform.position.z
         );
     }
-    
-    public void OnHit()
+
+    private void FindLowestPossiblePosition()
     {
-        // Only breakable if at the lowest level and not currently descending or breaking
-        if (isLowLevel && !isDescending && !isBreaking)
+        // Origen del rayo: posición del bloque actual
+        Vector3 rayOrigin = transform.position;
+        
+        // Vector de tamaño de la caja para el BoxCast
+        Vector3 boxSize = new Vector3(0.6f, 0.1f, 0.6f);
+        
+        // Distancia máxima del rayo (hacia abajo)
+        float maxRayDistance = transform.position.y;
+        
+        // Lista para almacenar los bloques encontrados
+        List<RaycastHit> foundBlocks = new List<RaycastHit>();
+        
+        // Realizar BoxCastAll para detectar todos los bloques debajo
+        RaycastHit[] hits = Physics.BoxCastAll(
+            rayOrigin,        // Origen
+            boxSize * 0.5f,   // Mitad de los extents
+            Vector3.down,     // Dirección hacia abajo
+            Quaternion.identity, // Sin rotación
+            maxRayDistance    // Distancia máxima
+        );
+        
+        // Buscar el bloque más bajo que no está descendiendo o el suelo
+        float lowestY = 0f + pivotOffset; // Posición mínima (suelo + offset)
+        bool foundStableBlock = false;
+        
+        foreach (RaycastHit hit in hits)
         {
-            StartCoroutine(BreakAnimation());
+            // Ignorar el propio bloque
+            if (hit.collider.gameObject == gameObject)
+                continue;
+                
+            BlockController blockBelow = hit.collider.GetComponent<BlockController>();
+            
+            if (blockBelow != null)
+            {
+                // Si el bloque está descendiendo, consultar su posición objetivo
+                if (blockBelow.IsDescending())
+                {
+                    // Obtener la posición objetivo del bloque en descenso
+                    Vector3 targetPos = blockBelow.GetTargetPosition();
+                    float blockTopY = targetPos.y + blockHeight;
+                    
+                    // Actualizar la posición más baja si es mayor que la actual
+                    if (blockTopY > lowestY)
+                    {
+                        lowestY = blockTopY;
+                        foundStableBlock = true;
+                    }
+                }
+                else
+                {
+                    // Si el bloque no está descendiendo, usar su posición actual
+                    float blockTopY = blockBelow.transform.position.y + blockHeight;
+                    
+                    // Actualizar la posición más baja si es mayor que la actual
+                    if (blockTopY > lowestY)
+                    {
+                        lowestY = blockTopY;
+                        foundStableBlock = true;
+                    }
+                }
+            }
+            else if (!foundStableBlock)
+            {
+                // Si no es un bloque y no hemos encontrado bloques estables,
+                // podría ser el suelo u otro obstáculo
+                float obstacleTopY = hit.point.y + pivotOffset;
+                
+                if (obstacleTopY > lowestY)
+                {
+                    lowestY = obstacleTopY;
+                }
+            }
         }
+
+        float adjustedY = lowestY - pivotOffset;
+        float roundedY = Mathf.Floor(adjustedY / blockHeight) * blockHeight;
+        lowestY = roundedY + pivotOffset;
+        // Establecer la posición objetivo final
+        targetPosition = new Vector3(transform.position.x, lowestY, transform.position.z);
+        
+        Debug.Log($"Bloque en {transform.position} descenderá hasta {targetPosition}");
+    }
+
+    private void CheckIfFloating()
+    {
+        // Si estamos en el nivel 0, no puede estar flotando
+        if (blockLevel == 0)
+            return;
+
+        // Verificar si la columna de este bloque ha sido rota
+        if (!brokenColumns.ContainsKey(columnPosition) || !brokenColumns[columnPosition])
+            return;
+            
+        // Origen del rayo: posición del bloque actual
+        Vector3 rayOrigin = transform.position;
+        Vector3 boxSize = new Vector3(0.6f, 0.1f, 0.6f);
+        float rayDistance = 0.8f*blockHeight; // Suficiente para detectar espacios de un nivel
+        
+        // Realizar cast para ver si hay algo debajo
+        RaycastHit[] hits = Physics.BoxCastAll(
+            rayOrigin, boxSize * 0.5f, Vector3.down, 
+            Quaternion.identity, rayDistance);
+        
+        bool foundSupport = false;
+        
+        foreach (RaycastHit hit in hits)
+        {
+            if (hit.collider.gameObject != gameObject)
+            {
+                // Hay algo debajo
+                foundSupport = true;
+                break;
+            }
+        }
+        
+        // Si no hay nada debajo, iniciar descenso
+        if (!foundSupport)
+        {
+            Debug.LogWarning($"Bloque flotante detectado en {transform.position}. Iniciando descenso.");
+            StartDescending();
+        }
+    }
+
+    public bool IsDescending()
+    {
+        return isDescending;
+    }
+
+    public Vector3 GetTargetPosition()
+    {
+        return targetPosition;
     }
     
     // Método llamado cuando un bloque es destruido
@@ -136,6 +288,8 @@ public class BlockController : MonoBehaviour
         // Si el bloque ya está en proceso de destrucción, ignoramos
         if (isBreaking)
             return;
+        
+        brokenColumns[columnPosition] = true;
 
         // Incrementar contador de bloques destruidos
         blocksDestroyed++;
@@ -176,7 +330,7 @@ public class BlockController : MonoBehaviour
         }
         
         // Notify blocks above to descend
-        NotifyBlocksAbove();
+        //NotifyBlocksAbove();
 
         // Lógica de generación de powerups con probabilidad
         if (enablePowerUps && Random.value <= powerUpChance)
