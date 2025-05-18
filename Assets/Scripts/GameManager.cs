@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using TMPro; // Cambiar de UnityEngine.UI a TMPro
 
 public class GameManager : MonoBehaviour
 {
@@ -15,6 +16,14 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private GameObject victoryPanel;
     [SerializeField] private GameObject pausePanel;
+
+    [Header("Score System")]
+    [SerializeField] private int currentScore = 0;
+    [SerializeField] private TMP_Text scoreText; // Cambiar de Text a TMP_Text
+
+    // Añadir esta propiedad para las vidas
+    [Header("Lives")]
+    [SerializeField] private int maxLives = 3;
 
     private void Awake()
     {
@@ -72,6 +81,11 @@ public class GameManager : MonoBehaviour
     // Método para reiniciar el nivel actual
     public void RestartLevel()
     {
+        // Reiniciar la puntuación al comenzar un nuevo nivel
+        currentScore = 0;
+        UpdateScoreUI();
+        
+        // Cargar la escena del nivel actual
         SceneManager.LoadScene(currentLevel);
     }
     
@@ -94,16 +108,72 @@ public class GameManager : MonoBehaviour
         }
     }
     
+    // Método para añadir puntos
+    public void AddPoints(int points)
+    {
+        currentScore += points;
+        UpdateScoreUI();
+    }
+
+    // Método para actualizar el UI de puntuación
+    private void UpdateScoreUI()
+    {
+        if (scoreText != null)
+        {
+            scoreText.text = "Score: " + currentScore;
+        }
+    }
+    
+    // Método para obtener la puntuación actual
+    public int GetCurrentScore()
+    {
+        return currentScore;
+    }
+
     // Método para mostrar gameover
     public void GameOver()
     {
-        if (gameOverPanel != null)
+        // Guardar puntuación actual
+        PlayerPrefs.SetInt("CurrentScore", currentScore);
+        PlayerPrefs.Save();
+        
+        // Mostrar el GameOver
+        ShowGameOverMenu();
+        
+        // Pausar el juego
+        Time.timeScale = 0;
+    }
+
+    private void ShowGameOverMenu()
+    {
+        // Buscar o crear panel de GameOver si no existe
+        if (gameOverPanel == null)
         {
-            gameOverPanel.SetActive(true);
+            gameOverPanel = GameObject.Find("GameOverPanel");
+            
+            if (gameOverPanel == null)
+            {
+                Debug.LogError("No se encontró el GameOverPanel en la escena");
+                return;
+            }
         }
         
-        // Pausa el juego
-        Time.timeScale = 0;
+        // Activar el panel
+        gameOverPanel.SetActive(true);
+        
+        // Establecer el texto de puntuación - BUSCA EN CUALQUIER PARTE
+        TMP_Text scoreTextUI = gameOverPanel.GetComponentInChildren<TMP_Text>();
+        if (scoreTextUI != null)
+        {
+            scoreTextUI.text = "Score: " + currentScore;
+        }
+        else
+        {
+            Debug.LogWarning("No se encontró TMP_Text en el GameOverPanel");
+        }
+        
+        // Configurar MenuController si existe
+        ConfigureMenuController();
     }
     
     // Método para mostrar victoria
@@ -124,5 +194,79 @@ public class GameManager : MonoBehaviour
         if (gameOverPanel != null) gameOverPanel.SetActive(false);
         if (victoryPanel != null) victoryPanel.SetActive(false);
         if (pausePanel != null) pausePanel.SetActive(false);
+    }
+
+    // Añade este método al GameManager
+    private void OnEnable()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        // Si es una escena de juego (cualquiera menos la 0), reiniciar puntuación
+        if (scene.buildIndex > 0)
+        {
+            currentScore = 0;
+            UpdateScoreUI();
+        }
+        
+        // Inicializa el nivel actual basado en el índice de la escena
+        currentLevel = scene.buildIndex;
+        
+        // Oculta paneles de UI si existen
+        HideAllPanels();
+        
+        // Busca referencias a paneles de UI
+        FindUIReferences();
+        
+        // Configura MenuController si existe
+        ConfigureMenuController();
+    }
+
+    private void FindUIReferences()
+    {
+        // Buscar el panel de GameOver
+        if (gameOverPanel == null)
+            gameOverPanel = GameObject.Find("GameOverPanel");
+        
+        // Buscar el texto de puntuación (puede estar en el HUD)
+        if (scoreText == null)
+        {
+            GameObject hud = GameObject.Find("HUD");
+            if (hud != null)
+            {
+                scoreText = hud.GetComponentInChildren<TMP_Text>();
+            }
+        }
+    }
+
+    private void ConfigureMenuController()
+    {
+        // Buscar MenuController en la escena
+        MenuController menuController = FindObjectOfType<MenuController>();
+        if (menuController != null)
+        {
+            // Buscar nameInputPanel
+            GameObject nameInputPanel = GameObject.Find("NameInputPanel");
+            if (nameInputPanel != null)
+            {
+                menuController.nameInputPanel = nameInputPanel;
+                Debug.Log("NameInputPanel asignado automáticamente al MenuController");
+            }
+            
+            // Asignar ScoreText del GameOver
+            if (gameOverPanel != null)
+            {
+                TMP_Text scoreTextUI = gameOverPanel.GetComponentInChildren<TMP_Text>();
+                if (scoreTextUI != null)
+                    menuController.scoreText = scoreTextUI;
+            }
+        }
     }
 }

@@ -293,8 +293,13 @@ public class BlockController : MonoBehaviour
 
         // Incrementar contador de bloques destruidos
         blocksDestroyed++;
-        Debug.Log($"Bloque destruido. Total: {blocksDestroyed}/{totalBlocksInitial} " +
-                  $"({GetDestroyedPercentage():F1}%)");
+        Debug.Log($"Bloque destruido. Total: {blocksDestroyed}/{totalBlocksInitial} ({GetDestroyedPercentage():F1}%)");
+
+        // Añadir puntos al GameManager
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.AddPoints(10); // 10 puntos por bloque
+        }
 
         // Iniciar la animación de destrucción
         StartCoroutine(BreakAnimation());
