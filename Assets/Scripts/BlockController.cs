@@ -461,43 +461,6 @@ public class BlockController : MonoBehaviour
             }
         }
     }
-
-    private void OnDrawGizmosSelected()
-    {
-        // Dibuja la caja de detección original (pequeña)
-        Vector3 center = transform.position + Vector3.up * blockHeight + Vector3.up * -pivotOffset;
-        Vector3 halfExtents = new Vector3(0.6f, blockHeight * 0.8f, 0.6f) * 0.5f;
-        Gizmos.color = Color.cyan;
-        Gizmos.matrix = Matrix4x4.TRS(center, Quaternion.identity, Vector3.one);
-        Gizmos.DrawWireCube(Vector3.zero, halfExtents * 2);
-        Gizmos.matrix = Matrix4x4.identity;
-        
-        // Dibuja el BoxCast vertical (columna completa)
-        Gizmos.color = Color.green;
-        Vector3 boxSize = new Vector3(0.6f, 0.1f, 0.6f);
-        Vector3 rayStart = transform.position;
-        Vector3 rayEnd = transform.position + Vector3.up * 20f;
-        
-        // Dibujar la línea central
-        Gizmos.DrawLine(rayStart, rayEnd);
-        
-        // Dibujar las cajas a lo largo del rayo
-        Gizmos.DrawWireCube(rayStart, boxSize);
-        Gizmos.DrawWireCube(rayStart + Vector3.up * 10f, boxSize);
-        Gizmos.DrawWireCube(rayEnd, boxSize);
-        
-        // Dibuja la posición objetivo para el descenso
-        if (blockLevel > 0)
-        {
-            Gizmos.color = Color.yellow;
-            Vector3 targetPos = new Vector3(
-                transform.position.x,
-                (blockLevel - 1) * blockHeight + pivotOffset,
-                transform.position.z
-            );
-            Gizmos.DrawWireSphere(targetPos, 0.3f);
-        }
-    }
     
     public void StartDescending()
     {

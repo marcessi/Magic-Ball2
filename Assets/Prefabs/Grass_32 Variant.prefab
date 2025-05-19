@@ -1,0 +1,112 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &8628524473434206460
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1440126301262631386, guid: baa23f018b95b3a4d9128b06e4845fd5, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1440126301262631386, guid: baa23f018b95b3a4d9128b06e4845fd5, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1440126301262631386, guid: baa23f018b95b3a4d9128b06e4845fd5, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1440126301262631386, guid: baa23f018b95b3a4d9128b06e4845fd5, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1440126301262631386, guid: baa23f018b95b3a4d9128b06e4845fd5, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1440126301262631386, guid: baa23f018b95b3a4d9128b06e4845fd5, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1440126301262631386, guid: baa23f018b95b3a4d9128b06e4845fd5, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1440126301262631386, guid: baa23f018b95b3a4d9128b06e4845fd5, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1440126301262631386, guid: baa23f018b95b3a4d9128b06e4845fd5, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1440126301262631386, guid: baa23f018b95b3a4d9128b06e4845fd5, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1781045633353026400, guid: baa23f018b95b3a4d9128b06e4845fd5, type: 3}
+      propertyPath: m_Name
+      value: Grass_32 Variant
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 4765056721784084161, guid: baa23f018b95b3a4d9128b06e4845fd5, type: 3}
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1781045633353026400, guid: baa23f018b95b3a4d9128b06e4845fd5, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2944059192097897450}
+    - targetCorrespondingSourceObject: {fileID: 1781045633353026400, guid: baa23f018b95b3a4d9128b06e4845fd5, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5714614943444619636}
+  m_SourcePrefab: {fileID: 100100000, guid: baa23f018b95b3a4d9128b06e4845fd5, type: 3}
+--- !u!1 &8000968938765417372 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1781045633353026400, guid: baa23f018b95b3a4d9128b06e4845fd5, type: 3}
+  m_PrefabInstance: {fileID: 8628524473434206460}
+  m_PrefabAsset: {fileID: 0}
+--- !u!65 &2944059192097897450
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8000968938765417372}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0.5, z: 0}
+--- !u!114 &5714614943444619636
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8000968938765417372}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a6a83bf19fb36643a93a1016eecaa49, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  blockLevel: 0
+  descendSpeed: 2
+  breakEffect: {fileID: 0}
+  breakAnimationDuration: 0.5
+  blockHeight: 1
+  pivotOffset: 0
+  enablePowerUps: 1
+  powerUpChance: 0.3
