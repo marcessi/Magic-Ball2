@@ -8,7 +8,7 @@ public class BlockController : MonoBehaviour
     [SerializeField] private int blockLevel = 0; // 0 is the lowest level
     [SerializeField] private float descendSpeed = 2f;
     [SerializeField] private GameObject breakEffect; // Particle effect or animation prefab for breaking
-    [SerializeField] private float breakAnimationDuration = 0.5f;
+    [SerializeField] private float breakAnimationDuration = 0.3f;
     [SerializeField] private float blockHeight = 1f; // Height of each block level
     [SerializeField] private float pivotOffset = 0f; // Offset for blocks with displaced pivot
     
@@ -51,10 +51,7 @@ public class BlockController : MonoBehaviour
     private bool shouldDescend = false;
     private bool isDescending = false;
     private Vector3 targetPosition;
-    private float floatingCheckDelay = 0.1f;
-    private float lastFloatingCheck = 0f;
-    private static Dictionary<Vector2, bool> brokenColumns = new Dictionary<Vector2, bool>(); // Rastrea columnas rotas
-    private Vector2 columnPosition; // Posición de la columna (X,Z) de este bloque
+    private float descendUnits = 0f;
     
     private void Awake()
     {
@@ -81,20 +78,16 @@ public class BlockController : MonoBehaviour
 
         position.x = Mathf.Round(position.x);
         position.z = Mathf.Round(position.z - 0.5f) + 0.5f;
-
-        // Calculate column position (only X and Z coordinates)
-        columnPosition = new Vector2(position.x, position.z);
-
-        if (!brokenColumns.ContainsKey(columnPosition))
-        {
-        brokenColumns[columnPosition] = false;
-        }
         
         // Check if block is at the lowest level (y=0 + offset)
         isLowLevel = blockLevel == 0;
         
         // Set initial target position one level down
-        UpdateTargetPosition();
+        targetPosition = new Vector3(
+            transform.position.x,
+            blockLevel > 0 ? (blockLevel - 1) * blockHeight + pivotOffset : pivotOffset,
+            transform.position.z
+        );
     }
     
     private void Update()
@@ -104,8 +97,6 @@ public class BlockController : MonoBehaviour
         {
             if (!isDescending)
             {
-                // Antes de iniciar el descenso, calcular la posición más baja posible
-                FindLowestPossiblePosition();
                 isDescending = true;
             }
             
@@ -127,159 +118,6 @@ public class BlockController : MonoBehaviour
                 isDescending = false;
             }
         }
-
-        lastFloatingCheck += Time.deltaTime;
-        if (lastFloatingCheck >= floatingCheckDelay && !isDescending && !shouldDescend)
-        {
-            CheckIfFloating();
-            lastFloatingCheck = 0f;
-        }
-    }
-    
-    private void UpdateTargetPosition()
-    {
-        // Esta función ahora solo se usa para inicialización
-        targetPosition = new Vector3(
-            transform.position.x,
-            blockLevel > 0 ? (blockLevel - 1) * blockHeight + pivotOffset : pivotOffset,
-            transform.position.z
-        );
-    }
-
-    private void FindLowestPossiblePosition()
-    {
-        // Origen del rayo: posición del bloque actual
-        Vector3 rayOrigin = transform.position;
-        
-        // Vector de tamaño de la caja para el BoxCast
-        Vector3 boxSize = new Vector3(0.6f, 0.1f, 0.6f);
-        
-        // Distancia máxima del rayo (hacia abajo)
-        float maxRayDistance = transform.position.y;
-        
-        // Lista para almacenar los bloques encontrados
-        List<RaycastHit> foundBlocks = new List<RaycastHit>();
-        
-        // Realizar BoxCastAll para detectar todos los bloques debajo
-        RaycastHit[] hits = Physics.BoxCastAll(
-            rayOrigin,        // Origen
-            boxSize * 0.5f,   // Mitad de los extents
-            Vector3.down,     // Dirección hacia abajo
-            Quaternion.identity, // Sin rotación
-            maxRayDistance    // Distancia máxima
-        );
-        
-        // Buscar el bloque más bajo que no está descendiendo o el suelo
-        float lowestY = 0f + pivotOffset; // Posición mínima (suelo + offset)
-        bool foundStableBlock = false;
-        
-        foreach (RaycastHit hit in hits)
-        {
-            // Ignorar el propio bloque
-            if (hit.collider.gameObject == gameObject)
-                continue;
-                
-            BlockController blockBelow = hit.collider.GetComponent<BlockController>();
-            
-            if (blockBelow != null)
-            {
-                // Si el bloque está descendiendo, consultar su posición objetivo
-                if (blockBelow.IsDescending())
-                {
-                    // Obtener la posición objetivo del bloque en descenso
-                    Vector3 targetPos = blockBelow.GetTargetPosition();
-                    float blockTopY = targetPos.y + blockHeight;
-                    
-                    // Actualizar la posición más baja si es mayor que la actual
-                    if (blockTopY > lowestY)
-                    {
-                        lowestY = blockTopY;
-                        foundStableBlock = true;
-                    }
-                }
-                else
-                {
-                    // Si el bloque no está descendiendo, usar su posición actual
-                    float blockTopY = blockBelow.transform.position.y + blockHeight;
-                    
-                    // Actualizar la posición más baja si es mayor que la actual
-                    if (blockTopY > lowestY)
-                    {
-                        lowestY = blockTopY;
-                        foundStableBlock = true;
-                    }
-                }
-            }
-            else if (!foundStableBlock)
-            {
-                // Si no es un bloque y no hemos encontrado bloques estables,
-                // podría ser el suelo u otro obstáculo
-                float obstacleTopY = hit.point.y + pivotOffset;
-                
-                if (obstacleTopY > lowestY)
-                {
-                    lowestY = obstacleTopY;
-                }
-            }
-        }
-
-        float adjustedY = lowestY - pivotOffset;
-        float roundedY = Mathf.Floor(adjustedY / blockHeight) * blockHeight;
-        lowestY = roundedY + pivotOffset;
-        // Establecer la posición objetivo final
-        targetPosition = new Vector3(transform.position.x, lowestY, transform.position.z);
-        
-        Debug.Log($"Bloque en {transform.position} descenderá hasta {targetPosition}");
-    }
-
-    private void CheckIfFloating()
-    {
-        // Si estamos en el nivel 0, no puede estar flotando
-        if (blockLevel == 0)
-            return;
-
-        // Verificar si la columna de este bloque ha sido rota
-        if (!brokenColumns.ContainsKey(columnPosition) || !brokenColumns[columnPosition])
-            return;
-            
-        // Origen del rayo: posición del bloque actual
-        Vector3 rayOrigin = transform.position;
-        Vector3 boxSize = new Vector3(0.6f, 0.1f, 0.6f);
-        float rayDistance = 0.8f*blockHeight; // Suficiente para detectar espacios de un nivel
-        
-        // Realizar cast para ver si hay algo debajo
-        RaycastHit[] hits = Physics.BoxCastAll(
-            rayOrigin, boxSize * 0.5f, Vector3.down, 
-            Quaternion.identity, rayDistance);
-        
-        bool foundSupport = false;
-        
-        foreach (RaycastHit hit in hits)
-        {
-            if (hit.collider.gameObject != gameObject)
-            {
-                // Hay algo debajo
-                foundSupport = true;
-                break;
-            }
-        }
-        
-        // Si no hay nada debajo, iniciar descenso
-        if (!foundSupport)
-        {
-            Debug.LogWarning($"Bloque flotante detectado en {transform.position}. Iniciando descenso.");
-            StartDescending();
-        }
-    }
-
-    public bool IsDescending()
-    {
-        return isDescending;
-    }
-
-    public Vector3 GetTargetPosition()
-    {
-        return targetPosition;
     }
     
     // Método llamado cuando un bloque es destruido
@@ -288,8 +126,6 @@ public class BlockController : MonoBehaviour
         // Si el bloque ya está en proceso de destrucción, ignoramos
         if (isBreaking)
             return;
-        
-        brokenColumns[columnPosition] = true;
 
         // Incrementar contador de bloques destruidos
         blocksDestroyed++;
@@ -335,7 +171,7 @@ public class BlockController : MonoBehaviour
         }
         
         // Notify blocks above to descend
-        //NotifyBlocksAbove();
+        NotifyBlocksAbove();
 
         // Lógica de generación de powerups con probabilidad
         if (enablePowerUps && Random.value <= powerUpChance)
@@ -345,6 +181,100 @@ public class BlockController : MonoBehaviour
         
         // Destroy the block
         Destroy(gameObject);
+    }
+
+    private void NotifyBlocksAbove()
+    {
+        // Origen del rayo: posición del bloque actual
+        Vector3 rayOrigin = transform.position;
+        
+        // Vector de tamaño de la caja para el BoxCast
+        Vector3 boxSize = new Vector3(0.6f, 0.1f, 0.6f); // Caja delgada pero ancha
+        
+        // Distancia para detectar solo bloques inmediatamente encima
+        float rayDistance = 20f; // Lo suficientemente largo para detectar toda la columna
+        
+        // Realizar un BoxCast hacia arriba para detectar bloques
+        RaycastHit[] hits = Physics.BoxCastAll(
+            rayOrigin,        // Origen
+            boxSize * 0.5f,   // Mitad de los extents
+            Vector3.up,       // Dirección hacia arriba
+            Quaternion.identity, // Sin rotación
+            rayDistance       // Distancia para toda la columna
+        );
+        
+        // Ordenar los hits por distancia (más cercanos primero)
+        System.Array.Sort(hits, (hit1, hit2) => hit1.distance.CompareTo(hit2.distance));
+        
+        // Variables para el algoritmo de propagación
+        bool foundFirstBlock = false;
+        float accumulatedDistance = 0f;
+        BlockController previousBlock = null;
+        
+        // Recorrer todos los hits ordenados por distancia
+        foreach (RaycastHit hit in hits)
+        {
+            BlockController blockAbove = hit.collider.GetComponent<BlockController>();
+            
+            // Ignorar objetos que no son bloques o el propio bloque
+            if (blockAbove == null || blockAbove == this)
+                continue;
+            
+            // Calculamos la distancia entre bloques
+            float distance;
+            
+            if (!foundFirstBlock)
+            {
+                // Para el primer bloque, la distancia es relativa al bloque que se rompe
+                distance = hit.distance;
+                foundFirstBlock = true;
+                accumulatedDistance = distance;
+                
+                // El primer bloque desciende (distancia - 1 unidad de bloque) o al menos 1 si están muy juntos
+                float descendUnits = Mathf.Max(1f, Mathf.Floor(distance / blockHeight));
+                
+                Debug.Log($"Primer bloque en {blockAbove.transform.position} descenderá {descendUnits} unidades. Distancia: {distance}");
+                blockAbove.DescendExactAmount(descendUnits * blockHeight);
+            }
+            else if (previousBlock != null)
+            {
+                // Para los siguientes bloques, calculamos la distancia respecto al bloque anterior
+                distance = hit.distance - accumulatedDistance;
+                accumulatedDistance = hit.distance;
+                
+                // Este bloque desciende lo mismo que el anterior + (distancia - 1 unidad)
+                float additionalUnits = Mathf.Max(0f, Mathf.Floor(distance / blockHeight) - 1f);
+                float descendUnits = previousBlock.GetDescendUnits() + additionalUnits;
+                
+                Debug.Log($"Bloque en {blockAbove.transform.position} descenderá {descendUnits} unidades. Distancia adicional: {distance}");
+                blockAbove.DescendExactAmount(descendUnits * blockHeight);
+            }
+            
+            previousBlock = blockAbove;
+        }
+    }
+
+    public void DescendExactAmount(float amount)
+    {
+        // Guardar cuántas unidades desciende este bloque (para la recursión)
+        descendUnits = amount / blockHeight;
+        
+        // Calcular posición objetivo
+        targetPosition = new Vector3(
+            transform.position.x,
+            transform.position.y - amount,
+            transform.position.z
+        );
+        
+        // Asegurarse de que no baje por debajo del suelo
+        if (targetPosition.y < pivotOffset)
+        {
+            targetPosition.y = pivotOffset;
+            descendUnits = (transform.position.y - pivotOffset) / blockHeight;
+        }
+        
+        Debug.Log($"Bloque en {transform.position} descenderá {descendUnits} unidades hasta {targetPosition}");
+        shouldDescend = true;
     }
     
     private void SpawnRandomPowerUp()
@@ -419,60 +349,12 @@ public class BlockController : MonoBehaviour
             return availableTypes[randomIndex];
         }
     }
-    
-    private void NotifyBlocksAbove()
-    {
-        // Origen del rayo: posición del bloque actual
-        Vector3 rayOrigin = transform.position;
-        
-        // Dirección: hacia arriba
-        Vector3 rayDirection = Vector3.up;
-        
-        // Vector de tamaño de la caja para el BoxCast
-        Vector3 boxSize = new Vector3(0.6f, 0.1f, 0.6f); // Caja delgada pero ancha
-        
-        // Distancia máxima del rayo (bastante alta para alcanzar toda la columna)
-        float maxRayDistance = 20f; // Ajustar según la altura de tu nivel
-        
-        // Lista para almacenar todos los bloques detectados
-        List<BlockController> blocksAbove = new List<BlockController>();
-        
-        // Realizar un BoxCast hacia arriba para detectar todos los bloques
-        RaycastHit[] hits = Physics.BoxCastAll(
-            rayOrigin,        // Origen
-            boxSize * 0.5f,   // Mitad de los extents
-            rayDirection,     // Dirección hacia arriba
-            Quaternion.identity, // Sin rotación
-            maxRayDistance    // Distancia máxima
-        );
-        
-        Debug.Log($"Buscando TODOS los bloques encima de {transform.position}. Encontrados: {hits.Length}");
-        
-        // Ordenar los resultados por distancia (los más cercanos primero)
-        System.Array.Sort(hits, (hit1, hit2) => hit1.distance.CompareTo(hit2.distance));
-        
-        // Procesar todos los hits encontrados
-        foreach (RaycastHit hit in hits)
-        {
-            BlockController blockAbove = hit.collider.GetComponent<BlockController>();
-            if (blockAbove != null && blockAbove != this) // Excluir el propio bloque
-            {
-                Debug.Log($"Notificando bloque en {blockAbove.transform.position} para descender");
-                blockAbove.StartDescending();
-            }
-            else if (hit.collider.gameObject != gameObject) // Excluir este mismo objeto
-            {
-                Debug.Log($"Objeto detectado sin BlockController: {hit.collider.gameObject.name}");
-            }
-        }
-    }
-    
+
     public void StartDescending()
     {
         shouldDescend = true;
     }
 
-    // Método para obtener el porcentaje de bloques destruidos
     private float GetDestroyedPercentage()
     {
         if (totalBlocksInitial == 0)
@@ -481,11 +363,25 @@ public class BlockController : MonoBehaviour
         return (float)blocksDestroyed / totalBlocksInitial * 100f;
     }
 
-    // Método para reiniciar los contadores estáticos cuando se cambia de nivel
     public static void ResetLevelCounters()
     {
         totalBlocksInitial = 0;
         blocksDestroyed = 0;
         isInitialized = false;
+    }
+
+        public bool IsDescending()
+    {
+        return isDescending;
+    }
+
+    public Vector3 GetTargetPosition()
+    {
+        return targetPosition;
+    }
+
+    public float GetDescendUnits()
+    {
+        return descendUnits;
     }
 }
