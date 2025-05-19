@@ -91,6 +91,11 @@ public class PowerupController : MonoBehaviour
     
     private void ApplyPowerupEffect(PalletController paddle)
     {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.AddPoints(20); // 20 puntos por powerup
+        }
+        
         switch (powerupType)
         {
             case PowerupType.Expand:
