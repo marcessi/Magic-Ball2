@@ -7,8 +7,9 @@ public class BallController : MonoBehaviour
     [Header("Ball Settings")]
     [SerializeField] private float initialSpeed = 10f;
     [SerializeField] private float maxSpeed = 20f;
-    [SerializeField] private Vector3 initialDirection = new Vector3(1f, 0f, 0.5f).normalized;
+    [SerializeField] private Vector3 initialDirection = new Vector3(0f, 0f, 1f).normalized;
     [SerializeField] private float hitForce = 1.1f; // Optional: increase ball speed slightly on each hit
+    [SerializeField] public bool isMainBall = true; // Añadir al inicio de BallController
 
     private Rigidbody rb;
     private bool gameStarted = false;
@@ -17,6 +18,9 @@ public class BallController : MonoBehaviour
     // Para el modo Power Ball
     private bool isPowerBall = false;
     private float powerBallTimer = 0f;
+
+    private bool temporarilyDisableNonZero = false; // Variable para controlar componentes no cero
+
 
     private bool isAttachedToPaddle = false;
     private Transform attachedPaddle = null;
@@ -31,17 +35,27 @@ public class BallController : MonoBehaviour
     private void Start()
     {
         startPosition = transform.position;
+        
         // Initialize ball at rest
         if (rb != null)
         {
             rb.linearVelocity = Vector3.zero;
         }
 
-        // Find and attach to the paddle at the start of the level
-        PalletController paddle = FindObjectOfType<PalletController>();
-        if (paddle != null)
+        // Solo adjuntar a la paleta si es la bola principal
+        if (isMainBall)
         {
-            AttachToPaddle(paddle.transform, paddle);
+            // Find and attach to the paddle at the start of the level
+            PalletController paddle = FindObjectOfType<PalletController>();
+            if (paddle != null)
+            {
+                AttachToPaddle(paddle.transform, paddle);
+            }
+        }
+        // Si es bola extra, asegurarse que no está cinemática
+        else if (rb != null)
+        {
+            rb.isKinematic = false;
         }
     }
 
@@ -148,12 +162,19 @@ public class BallController : MonoBehaviour
     
     private void EnsureNonZeroVelocityComponents()
     {
+        // Si está temporalmente desactivada, salimos
+        if (temporarilyDisableNonZero) 
+            return;
+        
         // Get current velocity
         Vector3 velocity = rb.linearVelocity;
         
-        // Make sure x and z components aren't too close to zero
-        // This prevents the ball from moving in a perfectly horizontal or vertical line
-        float minComponentValue = initialSpeed * 0.1f;
+        // NUEVO: Solo aplicar este ajuste después de un tiempo o en rebotes
+        if (Time.timeSinceLevelLoad < 1.0f && gameStarted)
+            return; // Permitir que la bola salga recta al inicio
+    
+        // Reducir el valor mínimo para que afecte menos a la dirección
+        float minComponentValue = initialSpeed * 0.1f; // Usar 0.05f en vez de 0.1f
         
         if (Mathf.Abs(velocity.x) < minComponentValue)
         {
@@ -171,26 +192,109 @@ public class BallController : MonoBehaviour
     // Reset the ball to its initial position and state
     public void ResetBall()
     {
+        // Restablecer estado
         transform.position = startPosition;
         rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
         gameStarted = false;
         initialSpeed = 10f; // Reset to initial speed
         
-        // Find and attach to the paddle at the start of the level
+        // Detener todas las corrutinas para asegurar estado limpio
+        StopAllCoroutines();
+        
+        // Restablecer banderas
+        temporarilyDisableNonZero = false;
+        
+        // Encontrar y adjuntar a la paleta
         PalletController paddle = FindObjectOfType<PalletController>();
         if (paddle != null)
         {
             AttachToPaddle(paddle.transform, paddle);
+        }
+        
+        // Si es PowerBall, desactivar ese modo
+        if (isPowerBall)
+        {
+            SetPowerBallMode(false);
+        }
+        
+        // Restaurar color original si es la bola principal
+        if (isMainBall)
+        {
+            GetComponent<Renderer>().material.color = Color.white;
         }
     }
 
     // Método para lanzar la bola en una dirección específica
     public void LaunchBall(Vector2 direction)
     {
+        // Si quieren lanzar hacia adelante (dirección inicial), usar nuestro método especial
+        if (Vector2.Dot(direction, new Vector2(0f, 1f)) > 0.99f)
+        {
+            LaunchBallPerfectlyStraight();
+            return;
+        }
+        
+        // Para otras direcciones, mantener el comportamiento existente
+        if (rb == null)
+        {
+            rb = GetComponent<Rigidbody>();
+            if (rb == null)
+            {
+                Debug.LogError("No se encontró Rigidbody en la bola");
+                return;
+            }
+        }
+        
+        rb.isKinematic = false;
+        isAttachedToPaddle = false;
         gameStarted = true;
+        
         Vector3 launchDirection = new Vector3(direction.x, 0, direction.y).normalized;
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+        // Usar velocity directo en vez de AddForce para mayor consistencia
         rb.linearVelocity = launchDirection * initialSpeed;
+        
+        Debug.Log("Bola lanzada con dirección: " + launchDirection);
     }
+
+    // Añadir este nuevo método a BallController.cs
+public void ForceImmediateLaunch(Vector2 direction)
+{
+    // Asegurarse de que no sea cinemático cuando se lanza
+    if (rb == null)
+        rb = GetComponent<Rigidbody>();
+    
+    // CÓDIGO IMPORTANTE: Cancelar cualquier corrutina que pueda interferir
+    StopAllCoroutines();
+    
+    // Asegurar que NO es cinemático
+    rb.isKinematic = false;
+    
+    // Asegurar que la bola no esté adherida a la paleta
+    isAttachedToPaddle = false;
+    attachedPaddle = null;
+    paddleController = null;
+    
+    // Marcar como juego iniciado
+    gameStarted = true;
+    
+    // IMPORTANTE: Asegurar que la bola no tiene gravedad
+    rb.useGravity = false;
+    
+    // Normalizar la dirección y aplicar la velocidad inicial inmediatamente
+    Vector3 launchDirection = new Vector3(direction.x, 0, direction.y).normalized;
+    
+    // Reiniciar completamente la velocidad
+    rb.linearVelocity = Vector3.zero;
+    rb.angularVelocity = Vector3.zero;
+    
+    // Asignar la nueva velocidad
+    rb.linearVelocity = launchDirection * initialSpeed;
+    
+    Debug.Log("Bola lanzada forzosamente con dirección: " + launchDirection);
+}
 
     // Restaura todas las colisiones ignoradas
     private void RestoreAllCollisions()
@@ -252,30 +356,82 @@ public class BallController : MonoBehaviour
         }
     }
 
-    public void DetachFromPaddle()
-    {
-        if (!isAttachedToPaddle)
-            return;
-        
-        isAttachedToPaddle = false;
+    // Modificar DetachFromPaddle para usar el nuevo método
+public void DetachFromPaddle()
+{
+    if (!isAttachedToPaddle)
+        return;
     
-        // IMPORTANTE: primero volver rb a no kinematic
+    // Marcar como no adherida antes de lanzar
+    isAttachedToPaddle = false;
+    
+    // Si hay un controlador de paleta, marcar el efecto magnético como usado
+    if (paddleController != null)
+    {
+        paddleController.MarkMagnetAsUsed();
+        paddleController = null;
+    }
+    
+    // Usar el nuevo método de lanzamiento perfectamente recto
+    LaunchBallPerfectlyStraight();
+}
+
+    // Método unificado para garantizar lanzamiento absolutamente recto
+    private void LaunchBallPerfectlyStraight()
+    {
+        // Asegurarse de que el rigidbody está listo
+        if (rb == null) rb = GetComponent<Rigidbody>();
+        
+        // IMPORTANTE: Detener cualquier movimiento previo
         rb.isKinematic = false;
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
         
-        // Ahora sí podemos establecer la velocidad
-        LaunchBall(initialDirection);
+        // Vector dirección EXACTAMENTE recto (en Z positivo)
+        Vector3 perfectStraightDirection = new Vector3(0f, 0f, 1f);
+        
+        // Aplicar velocidad directamente - NO usar AddForce ni ForceMode
+        rb.linearVelocity = perfectStraightDirection * initialSpeed;
+        
+        // Marcar como iniciado
         gameStarted = true;
+        isAttachedToPaddle = false;
         
-        // Si hay un controlador de paleta, marcar el efecto magnético como usado
-        if (paddleController != null)
+        // Desactivar temporalmente la función que añade componentes aleatorios
+        StopCoroutine("DisableNonZeroComponentsTemporarily"); // Detener cualquier coroutine previa
+        StartCoroutine(DisableNonZeroComponentsExtended());
+        
+        Debug.Log("Bola lanzada en dirección PERFECTAMENTE RECTA: " + rb.linearVelocity);
+    }
+
+    // Nueva corrutina con tiempo extendido de desactivación
+    private IEnumerator DisableNonZeroComponentsExtended()
+    {
+        // Desactivar la corrección de componentes por más tiempo
+        temporarilyDisableNonZero = true;
+        
+        // Mantener desactivado por 15 frames (aproximadamente 0.25 segundos a 60fps)
+        for (int i = 0; i < 15; i++)
         {
-            paddleController.MarkMagnetAsUsed();
-            paddleController = null;
+            // En cada frame, asegurar que la dirección sigue siendo perfectamente recta
+            if (rb && !rb.isKinematic)
+            {
+                // Si hay alguna desviación, corregirla inmediatamente
+                Vector3 currentVelocity = rb.linearVelocity;
+                if (Mathf.Abs(currentVelocity.x) > 0.01f)
+                {
+                    // Forzar dirección recta manteniendo la magnitud de velocidad
+                    float speed = currentVelocity.magnitude;
+                    rb.linearVelocity = new Vector3(0f, 0f, 1f) * speed;
+                }
+            }
+            yield return null;
         }
         
-        Debug.Log("Bola liberada de la paleta");
+        temporarilyDisableNonZero = false;
     }
-    // Añade este método para configurar IgnoreCollision con todos los bloques
+
+    // Añadir este método para configurar IgnoreCollision con todos los bloques
 private void SetIgnoreCollisionsWithBlocks(bool ignore)
 {
     BlockController[] blocks = FindObjectsOfType<BlockController>();
@@ -348,5 +504,35 @@ private void CheckBlocksInPath()
     }
 }
 
+// Añade este método a BallController.cs si no existe
+public void SetAsExtraBall()
+{
+    // Marcar como bola secundaria
+    isMainBall = false;
+    
+    // No necesita estar adherida a la paleta al inicio
+    gameStarted = true;
+    
+    // Cambiar color para distinguirla
+    Renderer renderer = GetComponent<Renderer>();
+    if (renderer != null)
+    {
+        renderer.material.color = new Color(1f, 0.8f, 0.2f); // Color dorado/amarillo
+    }
+    
+    // Autodestruir después de un tiempo (30 segundos)
+    StartCoroutine(DestroyAfterTime(30f));
+    
+    Debug.Log("Bola configurada como bola extra");
+}
 
+// Añadir esta corrutina para destruir la bola después de un tiempo
+private IEnumerator DestroyAfterTime(float time)
+{
+    yield return new WaitForSeconds(time);
+    if (this != null && !isMainBall)
+    {
+        Destroy(gameObject);
+    }
+}
 }
