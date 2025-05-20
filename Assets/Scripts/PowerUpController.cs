@@ -167,30 +167,80 @@ public class PowerupController : MonoBehaviour
     {
         if (ballPrefab == null)
         {
-            Debug.LogError("Falta el prefab de la bola para crear bolas extra");
-            return;
+            // Buscar la bola actual como plantilla
+            BallController mainBall = FindObjectOfType<BallController>();
+            if (mainBall != null && mainBall.isMainBall) 
+            {
+                ballPrefab = mainBall.gameObject;
+                Debug.Log("Usando la bola principal como ballPrefab");
+            }
+            else
+            {
+                Debug.LogError("No se pudo encontrar ballPrefab ni una bola existente para duplicar");
+                return;
+            }
         }
         
-        // Busca la bola actual para usar su posición
-        BallController[] existingBalls = FindObjectsOfType<BallController>();
-        if (existingBalls.Length > 0)
+        // Busca la bola principal para usar su posición EXACTA
+        BallController existingMainBall = FindMainBall();
+        
+        if (existingMainBall != null)
         {
-            Vector3 ballPosition = existingBalls[0].transform.position;
+            Vector3 ballPosition = existingMainBall.transform.position;
             
-            // Crea dos bolas con ligeras variaciones en su dirección inicial
+            // Crea dos bolas desde la posición exacta de la bola principal
             for (int i = 0; i < 2; i++)
             {
-                Vector3 spawnPosition = ballPosition + new Vector3(i * 0.5f, 0, 0);
+                // Posición ligeramente diferente para evitar superposición - usar solo offset X
+                Vector3 spawnPosition = ballPosition + new Vector3(i == 0 ? -0.5f : 0.5f, 0, 0);
+                
+                // Crear la bola con la opción de EXACTA posición
                 GameObject newBall = Instantiate(ballPrefab, spawnPosition, Quaternion.identity);
                 
-                // Lanza la bola en una dirección ligeramente distinta
+                // Configurar la bola extra primero antes de cualquier otra acción
                 BallController ballController = newBall.GetComponent<BallController>();
                 if (ballController != null)
                 {
-                    ballController.LaunchBall(Random.insideUnitCircle.normalized);
+                    // IMPORTANTE: Primero configurar como bola extra
+                    ballController.SetAsExtraBall();
+                    
+                    // IMPORTANTE: Esperar una fracción de segundo para asegurar inicialización
+                    StartCoroutine(LaunchBallDelayed(ballController, i));
                 }
             }
         }
+        else
+        {
+            Debug.LogWarning("No se encontró la bola principal para crear bolas extras");
+        }
+    }
+
+    // Añade este método auxiliar para encontrar la bola principal
+    private BallController FindMainBall()
+    {
+        BallController[] balls = FindObjectsOfType<BallController>();
+        foreach (var ball in balls)
+        {
+            if (ball.isMainBall)
+                return ball;
+        }
+        return null;
+    }
+
+    // Añade esta corrutina para asegurar el lanzamiento correcto
+    private IEnumerator LaunchBallDelayed(BallController ball, int index)
+    {
+        // Esperar un frame para que Unity termine la inicialización
+        yield return null;
+        
+        // Vector dirección equilibrado para asegurar que vaya hacia arriba/adelante
+        // Dirección 1: hacia arriba-izquierda, Dirección 2: hacia arriba-derecha
+        Vector2 direction = new Vector2((index == 0) ? -0.5f : 0.5f, 1f).normalized;
+        
+        // Forzar el lanzamiento inmediato
+        ball.ForceImmediateLaunch(direction);
+        
+        Debug.Log($"Bola extra {index+1} lanzada con dirección {direction}");
     }
     
     // Activa el modo imán en la paleta

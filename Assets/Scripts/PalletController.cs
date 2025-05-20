@@ -194,4 +194,12 @@ public class PalletController : MonoBehaviour
             }
         }
     }
+
+    // Añadir este método a PalletController.cs
+    public void ResetToOriginalScale()
+    {
+        // Restaurar escala original inmediatamente, sin animación
+        transform.localScale = originalScale;
+        Debug.Log("Paleta restaurada a su escala original");
+    }
 }

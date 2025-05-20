@@ -39,13 +39,24 @@ public class LimitController : MonoBehaviour
         BallController collidedBall = collision.gameObject.GetComponent<BallController>();
         if (collidedBall != null)
         {
+            // Si es una bola extra, simplemente destruirla sin penalización
+            if (!collidedBall.isMainBall)
+            {
+                Debug.Log("Bola extra perdida - sin penalización");
+                Destroy(collidedBall.gameObject);
+                return;
+            }
+            
             // Restar una vida
             currentLives--;
             UpdateLivesDisplay();
             
-            // Si aún quedan vidas, resetear la pelota
+            // Si aún quedan vidas, resetear la pelota y los powerups
             if (currentLives > 0)
             {
+                // Restablecer todos los powerups activos
+                ResetAllPowerups();
+                
                 // Reset the paddle to its initial position
                 if (paddle != null)
                 {
@@ -129,5 +140,36 @@ public class LimitController : MonoBehaviour
                     heartImages[i].enabled = i < currentLives;
             }
         }
+    }
+
+    // Añadir este método a LimitController.cs
+    private void ResetAllPowerups()
+    {
+        // 1. Eliminar todos los powerups que estén cayendo en la escena
+        PowerupController[] activePowerups = FindObjectsOfType<PowerupController>();
+        foreach (var powerup in activePowerups)
+        {
+            Destroy(powerup.gameObject);
+        }
+        
+        // 2. Restablecer la paleta a su tamaño original
+        PalletController paddle = FindObjectOfType<PalletController>();
+        if (paddle != null)
+        {
+            paddle.ResetToOriginalScale();
+            paddle.DeactivateMagnetMode();
+        }
+        
+        // 3. Desactivar PowerBall en todas las bolas
+        BallController[] balls = FindObjectsOfType<BallController>();
+        foreach (var ball in balls)
+        {
+            if (ball.isMainBall) // Solo resetear la bola principal
+            {
+                ball.SetPowerBallMode(false);
+            }
+        }
+        
+        Debug.Log("Todos los powerups han sido restablecidos");
     }
 }
