@@ -114,7 +114,7 @@ public class PowerupController : MonoBehaviour
                 break;
                 
             case PowerupType.NormalBall:
-                DeactivatePowerBall();
+                DesactivatePowerBall();
                 Debug.Log("PowerUp aplicado: Normal Ball - Modo PowerBall desactivado");
                 break;
                 
@@ -147,7 +147,7 @@ public class PowerupController : MonoBehaviour
     }
     
     // Desactiva el modo Power Ball en todas las bolas
-    private void DeactivatePowerBall()
+    private void DesactivatePowerBall()
     {
         // Buscar todas las bolas activas en la escena
         BallController[] balls = FindObjectsOfType<BallController>();
