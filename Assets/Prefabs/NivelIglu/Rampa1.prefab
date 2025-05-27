@@ -11,9 +11,8 @@ GameObject:
   - component: {fileID: 6035539497217269660}
   - component: {fileID: 1420104128427208317}
   - component: {fileID: 4962775861399958838}
-  - component: {fileID: 8379590045459248475}
   m_Layer: 0
-  m_Name: Rampa 2
+  m_Name: Rampa1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -76,20 +75,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &8379590045459248475
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1003805561007983912}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 95ee71613e4b41c4d985d68e12f3ca9b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  scrollSpeedX: 1
-  scrollSpeedY: -5
 --- !u!1001 &3239741785874124089
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -141,7 +126,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: 39e2a36d9eb154d39b77fc97095043cf, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: f70d582ac8795e94fbba81f1bda57848, type: 2}
+      objectReference: {fileID: 2100000, guid: 00494841d457c5e40beb347b6483f7c9, type: 2}
     - target: {fileID: 919132149155446097, guid: 39e2a36d9eb154d39b77fc97095043cf, type: 3}
       propertyPath: m_Name
       value: GM-Ramp
