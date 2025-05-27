@@ -1,0 +1,11 @@
+fileFormatVersion: 2
+guid: fb3f7a2f054e1374d8d4e5120c41d0bb
+NativeFormatImporter:
+  userData: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 51108
+  packageName: Grids MX - The Definitive Snapping Solution
+  packageVersion: 2.0.0
+  assetPath: Assets/Grids MX/Examples/1-EditorExample/Resources/GridsMXData/Example2-rotated-clamp.asset
+  uploadId: 229956

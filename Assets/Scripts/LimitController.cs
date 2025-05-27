@@ -151,9 +151,13 @@ public class LimitController : MonoBehaviour
         {
             Destroy(powerup.gameObject);
         }
+        PalletController paddle = FindObjectOfType<PalletController>();
+        if (paddle != null)
+        {
+            paddle.DeactivateShootMode();
+        }
         
         // 2. Restablecer la paleta a su tamaño original
-        PalletController paddle = FindObjectOfType<PalletController>();
         if (paddle != null)
         {
             paddle.ResetToOriginalScale();

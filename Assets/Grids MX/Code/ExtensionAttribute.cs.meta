@@ -1,0 +1,20 @@
+fileFormatVersion: 2
+guid: 3bfd985a2f7e54442b7cfbc6b51ac952
+timeCreated: 1518585541
+licenseType: Store
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 51108
+  packageName: Grids MX - The Definitive Snapping Solution
+  packageVersion: 2.0.0
+  assetPath: Assets/Grids MX/Code/ExtensionAttribute.cs
+  uploadId: 229956

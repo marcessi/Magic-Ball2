@@ -12,11 +12,19 @@ public class PalletController : MonoBehaviour
     [SerializeField] private float maxScaleFactor = 2.0f; // Escala máxima respecto a la original
     [SerializeField] private float minScaleFactor = 0.5f; // Escala mínima respecto a la original
     
+    [Header("Shooting Mode")]
+    [SerializeField] private Transform leftShootPoint;
+    [SerializeField] private Transform rightShootPoint;
+    [SerializeField] private GameObject bulletPrefab;
+    [SerializeField] private float shootInterval = 0.5f;
+    
     private Vector2 movimientoInput;
     private Vector3 initialPosition;
     private Vector3 originalScale;
     private bool magnetModeActive = false;
     private bool magnetEffectUsed = false;
+    private bool shootModeActive = false;
+    private Coroutine shootingCoroutine = null;
     
     private void Start()
     {
@@ -232,5 +240,115 @@ public class PalletController : MonoBehaviour
         // Restaurar escala original inmediatamente, sin animación
         transform.localScale = originalScale;
         Debug.Log("Paleta restaurada a su escala original");
+    }
+
+    // Método para activar el modo de disparo
+    public void ActivateShootMode(float duration)
+    {
+        // Activar modo de disparo
+        shootModeActive = true;
+        
+        // Cambiar apariencia visual para indicar que el modo disparo está activo
+        GetComponent<Renderer>().material.color = new Color(0.2f, 0.6f, 1f); // Azul eléctrico
+        
+        // Iniciar la corrutina de disparo
+        if (shootingCoroutine != null)
+        {
+            StopCoroutine(shootingCoroutine);
+        }
+        shootingCoroutine = StartCoroutine(ShootBullets());
+        
+        // Si se especifica una duración, desactivar después de ese tiempo
+        if (duration > 0)
+        {
+            StartCoroutine(DeactivateShootModeAfterDelay(duration));
+        }
+        
+        Debug.Log("Modo disparo activado en la paleta");
+    }
+
+    // Corrutina para disparar balas
+    private System.Collections.IEnumerator ShootBullets()
+    {
+        // Crear puntos de disparo si no existen
+        if (leftShootPoint == null)
+        {
+            leftShootPoint = new GameObject("LeftShootPoint").transform;
+            leftShootPoint.SetParent(transform);
+            // Modificar la posición - notar que Z ahora es positivo
+            leftShootPoint.localPosition = new Vector3(-transform.localScale.y/2 + 0.2f, 0.2f, 0.3f);
+            // Asegurarnos que mira hacia adelante
+            leftShootPoint.localRotation = Quaternion.Euler(0, 0, 0);
+        }
+        
+        if (rightShootPoint == null)
+        {
+            rightShootPoint = new GameObject("RightShootPoint").transform;
+            rightShootPoint.SetParent(transform);
+            // Modificar la posición - notar que Z ahora es positivo
+            rightShootPoint.localPosition = new Vector3(transform.localScale.y/2 - 0.2f, 0.2f, 0.3f);
+            // Asegurarnos que mira hacia adelante
+            rightShootPoint.localRotation = Quaternion.Euler(0, 0, 0);
+        }
+        
+        // Mientras el modo esté activo, disparar a intervalos
+        while (shootModeActive)
+        {
+            // Disparar desde ambos puntos
+            if (bulletPrefab != null)
+            {
+                // Disparo izquierdo - usar la rotación correcta para que vaya hacia adelante
+                GameObject leftBullet = Instantiate(
+                    bulletPrefab, 
+                    leftShootPoint.position, 
+                    Quaternion.Euler(0, 0, 0) // Esta rotación es crucial
+                );
+                
+                // Disparo derecho - usar la rotación correcta para que vaya hacia adelante
+                GameObject rightBullet = Instantiate(
+                    bulletPrefab, 
+                    rightShootPoint.position, 
+                    Quaternion.Euler(0, 0, 0) // Esta rotación es crucial
+                );
+                
+                // Sonido de disparo (opcional)
+                AudioSource audioSource = GetComponent<AudioSource>();
+                if (audioSource != null)
+                {
+                    audioSource.Play();
+                }
+            }
+            else
+            {
+                Debug.LogWarning("Prefab de bala no asignado en PalletController");
+            }
+            
+            // Esperar el intervalo entre disparos
+            yield return new WaitForSeconds(shootInterval);
+        }
+    }
+
+    // Método para desactivar el modo de disparo después de un tiempo
+    private System.Collections.IEnumerator DeactivateShootModeAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        DeactivateShootMode();
+    }
+
+    // Método para desactivar manualmente el modo de disparo
+    public void DeactivateShootMode()
+    {
+        shootModeActive = false;
+        
+        if (shootingCoroutine != null)
+        {
+            StopCoroutine(shootingCoroutine);
+            shootingCoroutine = null;
+        }
+        
+        // Restaurar apariencia visual
+        GetComponent<Renderer>().material.color = Color.white;
+        
+        Debug.Log("Modo disparo desactivado en la paleta");
     }
 }

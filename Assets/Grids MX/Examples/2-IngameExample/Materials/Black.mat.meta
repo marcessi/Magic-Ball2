@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: bdbdf24ba1f535c4db7c2ecb63f02ec3
+timeCreated: 1448327715
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 51108
+  packageName: Grids MX - The Definitive Snapping Solution
+  packageVersion: 2.0.0
+  assetPath: Assets/Grids MX/Examples/2-IngameExample/Materials/Black.mat
+  uploadId: 229956

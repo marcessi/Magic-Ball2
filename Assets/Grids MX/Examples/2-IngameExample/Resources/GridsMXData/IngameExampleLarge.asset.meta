@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 737c534c992d46443819ea79e157d908
+timeCreated: 1448327624
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 51108
+  packageName: Grids MX - The Definitive Snapping Solution
+  packageVersion: 2.0.0
+  assetPath: Assets/Grids MX/Examples/2-IngameExample/Resources/GridsMXData/IngameExampleLarge.asset
+  uploadId: 229956
