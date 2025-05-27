@@ -5,8 +5,8 @@ using System.Collections;
 public class PalletController : MonoBehaviour
 {
     [SerializeField] private float velocidad = 10f;
-    [SerializeField] private float limiteIzquierdo = -8f;
-    [SerializeField] private float limiteDerecho = 8f;
+    [SerializeField] private float limiteIzquierdo = -7f;
+    [SerializeField] private float limiteDerecho = 6f;
     
     [Header("Scale Settings")]
     [SerializeField] private float maxScaleFactor = 2.0f; // Escala máxima respecto a la original
@@ -35,11 +35,11 @@ public class PalletController : MonoBehaviour
     
     private void Update()
     {
-        // Invertir el valor de entrada para corregir la dirección
-        float direccionCorregida = -movimientoInput.x;
+        // Invertir la entrada para corregir el problema: A -> izquierda, D -> derecha
+        float movimientoHorizontal = -movimientoInput.x;
         
-        // Mover la paleta en su propio eje Y local (debido a la rotación de 90° en X)
-        transform.Translate(Vector3.up * direccionCorregida * velocidad * Time.deltaTime, Space.Self);
+        // Mover la paleta en el eje Z mundial usando entrada horizontal invertida
+        transform.Translate(Vector3.forward * movimientoHorizontal * velocidad * Time.deltaTime);
         
         // Aplicar límites en coordenadas mundiales
         Vector3 posicionActual = transform.position;
@@ -76,13 +76,13 @@ public class PalletController : MonoBehaviour
         
         // Calcular escala objetivo con el incremento
         Vector3 targetScale = transform.localScale;
-        targetScale.y += incrementAmount;
+        targetScale.z += incrementAmount; // Aumentar tamaño en el eje Z
         
         // Limitar al tamaño máximo (basado en la escala original)
-        float maxScale = originalScale.y * maxScaleFactor;
-        if (targetScale.y > maxScale)
+        float maxScale = originalScale.z * maxScaleFactor;
+        if (targetScale.z > maxScale)
         {
-            targetScale.y = maxScale;
+            targetScale.z = maxScale;
         }
         
         // Expand the paddle gradually
@@ -101,13 +101,13 @@ public class PalletController : MonoBehaviour
         
         // Calcular escala objetivo con el decremento
         Vector3 targetScale = transform.localScale;
-        targetScale.y -= decrementAmount;
+        targetScale.z -= decrementAmount; // Reducir tamaño en el eje Z
         
         // Limitar al tamaño mínimo (basado en la escala original)
-        float minScale = originalScale.y * minScaleFactor;
-        if (targetScale.y < minScale)
+        float minScale = originalScale.z * minScaleFactor;
+        if (targetScale.z < minScale)
         {
-            targetScale.y = minScale;
+            targetScale.z = minScale;
         }
         
         // Shrink the paddle gradually
@@ -152,9 +152,6 @@ public class PalletController : MonoBehaviour
             StartCoroutine(DeactivateMagnetAfterDelay(duration));
         }
         
-        // Cambiar apariencia visual para indicar que el modo imán está activo
-        GetComponent<Renderer>().material.color = Color.blue;
-        
         Debug.Log("Modo imán activado en la paleta");
     }
     
@@ -169,9 +166,6 @@ public class PalletController : MonoBehaviour
         magnetModeActive = false;
         magnetEffectUsed = false;
         
-        // Restaurar apariencia visual
-        GetComponent<Renderer>().material.color = Color.white;
-        
         Debug.Log("Modo imán desactivado en la paleta");
     }
     
@@ -180,9 +174,6 @@ public class PalletController : MonoBehaviour
     {
         magnetEffectUsed = true;
         magnetModeActive = false; // Desactivar completamente el modo imán
-        
-        // Restaurar apariencia visual
-        GetComponent<Renderer>().material.color = Color.white;
         
         Debug.Log("Efecto imán usado y desactivado");
     }
@@ -202,8 +193,8 @@ public class PalletController : MonoBehaviour
             // Calcular la posición relativa del impacto en la paleta (entre -1 y 1)
             Vector3 paddleLocalPoint = transform.InverseTransformPoint(contact.point);
             
-            // CORRECCIÓN: Invertir el cálculo para que coincida con la orientación real
-            float relativePosition = -paddleLocalPoint.y / (transform.localScale.y * 0.5f);
+            // Usar paddleLocalPoint.z para una paleta que se mueve en el eje Z
+            float relativePosition = paddleLocalPoint.z / (transform.localScale.z * 0.5f);
             
             // Clamp entre -1 y 1 por seguridad
             relativePosition = Mathf.Clamp(relativePosition, -1f, 1f);
@@ -217,16 +208,16 @@ public class PalletController : MonoBehaviour
 
             if (relativePosition < -0.3f) // Golpeó el lado izquierdo
             {
-                // Dirigir hacia la izquierda con componente Z siempre positiva
-                Vector3 newDirection = new Vector3(-Mathf.Abs(currentVelocity.x), 0, Mathf.Abs(currentVelocity.z));
+                // Dirigir hacia la izquierda (z negativo) con componente Y siempre positiva
+                Vector3 newDirection = new Vector3(currentVelocity.x, Mathf.Abs(currentVelocity.y), -Mathf.Abs(currentVelocity.z));
                 Debug.Log("Rebote hacia IZQUIERDA. Posición relativa: " + relativePosition);
                 float finalSpeed = Mathf.Max(currentVelocity.magnitude, minVelocityMagnitude);
                 ballRb.linearVelocity = newDirection.normalized * finalSpeed;
             }
             else if (relativePosition > 0.3f) // Golpeó el lado derecho
             {
-                // Dirigir hacia la derecha con componente Z siempre positiva
-                Vector3 newDirection = new Vector3(Mathf.Abs(currentVelocity.x), 0, Mathf.Abs(currentVelocity.z));
+                // Dirigir hacia la derecha (z positivo) con componente Y siempre positiva
+                Vector3 newDirection = new Vector3(currentVelocity.x, Mathf.Abs(currentVelocity.y), Mathf.Abs(currentVelocity.z));
                 Debug.Log("Rebote hacia DERECHA. Posición relativa: " + relativePosition);
                 float finalSpeed = Mathf.Max(currentVelocity.magnitude, minVelocityMagnitude);
                 ballRb.linearVelocity = newDirection.normalized * finalSpeed;
@@ -247,10 +238,7 @@ public class PalletController : MonoBehaviour
     {
         // Activar modo de disparo
         shootModeActive = true;
-        
-        // Cambiar apariencia visual para indicar que el modo disparo está activo
-        GetComponent<Renderer>().material.color = new Color(0.2f, 0.6f, 1f); // Azul eléctrico
-        
+
         // Iniciar la corrutina de disparo
         if (shootingCoroutine != null)
         {
@@ -275,20 +263,18 @@ public class PalletController : MonoBehaviour
         {
             leftShootPoint = new GameObject("LeftShootPoint").transform;
             leftShootPoint.SetParent(transform);
-            // Modificar la posición - notar que Z ahora es positivo
-            leftShootPoint.localPosition = new Vector3(-transform.localScale.y/2 + 0.2f, 0.2f, 0.3f);
-            // Asegurarnos que mira hacia adelante
-            leftShootPoint.localRotation = Quaternion.Euler(0, 0, 0);
+            // Posición ajustada para una pala que se mueve en el eje Z
+            leftShootPoint.localPosition = new Vector3(-0.4f, 0.3f, transform.localScale.z/2 - 0.2f);
+            leftShootPoint.localRotation = Quaternion.Euler(90, 0, 0); // Rotación para que dispare hacia arriba (Y+)
         }
         
         if (rightShootPoint == null)
         {
             rightShootPoint = new GameObject("RightShootPoint").transform;
             rightShootPoint.SetParent(transform);
-            // Modificar la posición - notar que Z ahora es positivo
-            rightShootPoint.localPosition = new Vector3(transform.localScale.y/2 - 0.2f, 0.2f, 0.3f);
-            // Asegurarnos que mira hacia adelante
-            rightShootPoint.localRotation = Quaternion.Euler(0, 0, 0);
+            // Posición ajustada para una pala que se mueve en el eje Z
+            rightShootPoint.localPosition = new Vector3(0.4f, 0.3f, transform.localScale.z/2 - 0.2f);
+            rightShootPoint.localRotation = Quaternion.Euler(90, 0, 0); // Rotación para que dispare hacia arriba (Y+)
         }
         
         // Mientras el modo esté activo, disparar a intervalos
@@ -297,18 +283,18 @@ public class PalletController : MonoBehaviour
             // Disparar desde ambos puntos
             if (bulletPrefab != null)
             {
-                // Disparo izquierdo - usar la rotación correcta para que vaya hacia adelante
+                // Disparo izquierdo - usar la rotación correcta para que vaya hacia arriba (Y+)
                 GameObject leftBullet = Instantiate(
                     bulletPrefab, 
                     leftShootPoint.position, 
-                    Quaternion.Euler(0, 0, 0) // Esta rotación es crucial
+                    Quaternion.Euler(90, 0, 0) // Rotación para que dispare hacia arriba (Y+)
                 );
                 
-                // Disparo derecho - usar la rotación correcta para que vaya hacia adelante
+                // Disparo derecho - usar la rotación correcta para que vaya hacia arriba (Y+)
                 GameObject rightBullet = Instantiate(
                     bulletPrefab, 
                     rightShootPoint.position, 
-                    Quaternion.Euler(0, 0, 0) // Esta rotación es crucial
+                    Quaternion.Euler(90, 0, 0) // Rotación para que dispare hacia arriba (Y+)
                 );
                 
                 // Sonido de disparo (opcional)
@@ -345,9 +331,6 @@ public class PalletController : MonoBehaviour
             StopCoroutine(shootingCoroutine);
             shootingCoroutine = null;
         }
-        
-        // Restaurar apariencia visual
-        GetComponent<Renderer>().material.color = Color.white;
         
         Debug.Log("Modo disparo desactivado en la paleta");
     }
