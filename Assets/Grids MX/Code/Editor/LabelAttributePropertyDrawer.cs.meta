@@ -1,0 +1,20 @@
+fileFormatVersion: 2
+guid: 6b9826408ebcf44d998e7a2133691698
+timeCreated: 1518585308
+licenseType: Store
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 51108
+  packageName: Grids MX - The Definitive Snapping Solution
+  packageVersion: 2.0.0
+  assetPath: Assets/Grids MX/Code/Editor/LabelAttributePropertyDrawer.cs
+  uploadId: 229956

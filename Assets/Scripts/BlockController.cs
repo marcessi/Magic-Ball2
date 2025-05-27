@@ -30,7 +30,10 @@ public class BlockController : MonoBehaviour
         NormalBall,      // Restaura la bola al modo normal
         ExtraBalls,      // Añade dos bolas extra
         Magnet,          // La bola se pega a la paleta
-        NextLevel        // Pasa al siguiente nivel
+        NextLevel,       // Pasa al siguiente nivel
+        SpeedUp,         // Aumenta la velocidad de la bola
+        SlowDown,        // Disminuye la velocidad de la bola
+        Shoot            // Activa el modo disparo de la paleta
     }
     
     // Diccionario que mapea tipos a nombres de prefab
@@ -42,7 +45,10 @@ public class BlockController : MonoBehaviour
         { PowerUpType.NormalBall, "normalball" },
         { PowerUpType.ExtraBalls, "extraballs" },
         { PowerUpType.Magnet, "magnet" },
-        { PowerUpType.NextLevel, "nextlevel" }
+        { PowerUpType.NextLevel, "nextlevel" },
+        { PowerUpType.SpeedUp, "speedup" },    // Nuevo powerup de velocidad aumentada
+        { PowerUpType.SlowDown, "slowdown" },  // Nuevo powerup de velocidad reducida
+        { PowerUpType.Shoot, "shoot" }         // Nuevo powerup de disparo
     };
     
     // Variables existentes

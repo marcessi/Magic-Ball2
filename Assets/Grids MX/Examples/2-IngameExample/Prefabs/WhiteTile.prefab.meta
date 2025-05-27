@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 6fadfe67a62ba26438356f5da7465cd8
+timeCreated: 1448328091
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 51108
+  packageName: Grids MX - The Definitive Snapping Solution
+  packageVersion: 2.0.0
+  assetPath: Assets/Grids MX/Examples/2-IngameExample/Prefabs/WhiteTile.prefab
+  uploadId: 229956

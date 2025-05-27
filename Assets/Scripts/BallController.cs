@@ -9,6 +9,17 @@ public class BallController : MonoBehaviour
     [SerializeField] private Vector3 initialDirection = new Vector3(0f, 0f, 1f).normalized;
     [SerializeField] public bool isMainBall = true;
 
+    [Header("Speed Effects")]
+    private float defaultSpeed;
+    private float currentSpeedMultiplier = 1.0f;
+    private Coroutine speedChangeCoroutine = null;
+
+    [Header("Trail Effect")]
+    [SerializeField] private TrailRenderer trailRenderer;
+    private Color normalTrailColor = new Color(0.5f, 0.5f, 1f, 0.5f);
+    private Color powerBallTrailColor = new Color(1f, 0.3f, 0.3f, 0.7f);
+
+
     private Rigidbody rb;
     private bool gameStarted = false;
     private Vector3 startPosition;
@@ -25,6 +36,25 @@ public class BallController : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
+
+         defaultSpeed = initialSpeed;
+    
+    // Comprobar si hay un TrailRenderer o crearlo si no existe
+        if (trailRenderer == null)
+        {
+            trailRenderer = GetComponent<TrailRenderer>();
+            if (trailRenderer == null)
+            {
+                trailRenderer = gameObject.AddComponent<TrailRenderer>();
+                ConfigureTrailRenderer(trailRenderer);
+            }
+        }
+        
+        // Desactivar la estela al inicio
+        if (trailRenderer != null)
+        {
+            trailRenderer.enabled = false;
+        }
     }
 
     private void Start()
@@ -52,6 +82,7 @@ public class BallController : MonoBehaviour
         {
             rb.isKinematic = false;
         }
+        
     }
 
     private void Update()
@@ -266,7 +297,7 @@ public class BallController : MonoBehaviour
         rb.angularVelocity = Vector3.zero;
         // Usar velocity directo en vez de AddForce para mayor consistencia
         rb.linearVelocity = launchDirection * initialSpeed;
-        
+        UpdateTrailEffect();
         Debug.Log("Bola lanzada con dirección: " + launchDirection);
     }
 
@@ -381,6 +412,7 @@ public class BallController : MonoBehaviour
 
         // Cambiar aspecto visual de la bola para indicar el modo
         GetComponent<Renderer>().material.color = isPowerBall ? Color.red : Color.white;
+        UpdateTrailEffect();
         Debug.Log("Modo PowerBall: " + (enabled ? "ACTIVADO" : "DESACTIVADO"));
     }
 
@@ -401,5 +433,106 @@ public class BallController : MonoBehaviour
         }
         
         Debug.Log("Bola configurada como bola extra");
+    }
+
+    private void ConfigureTrailRenderer(TrailRenderer trail)
+    {
+        trail.time = 0.5f;               // Duración de la estela
+        trail.minVertexDistance = 0.1f;  // Distancia mínima entre vértices
+        trail.startWidth = 0.3f;         // Ancho al inicio de la estela
+        trail.endWidth = 0.0f;           // Ancho al final de la estela
+        trail.startColor = normalTrailColor;
+        trail.endColor = new Color(normalTrailColor.r, normalTrailColor.g, normalTrailColor.b, 0f);
+        
+        // Crear un material para la estela si no lo tiene
+        if (trail.material == null)
+        {
+            Material trailMaterial = new Material(Shader.Find("Sprites/Default"));
+            trail.material = trailMaterial;
+        }
+    }
+
+    // Añadir este método para cambiar la velocidad de la bola
+    public void ChangeSpeed(float speedMultiplier, float duration)
+    {
+        // Cancelar cualquier cambio de velocidad en curso
+        if (speedChangeCoroutine != null)
+        {
+            StopCoroutine(speedChangeCoroutine);
+        }
+        
+        // Iniciar el nuevo cambio de velocidad
+        speedChangeCoroutine = StartCoroutine(SpeedChangeCoroutine(speedMultiplier, duration));
+    }
+
+    // Corrutina para cambiar la velocidad durante un tiempo
+    private IEnumerator SpeedChangeCoroutine(float speedMultiplier, float duration)
+    {
+        // Guardar el multiplicador actual para restaurarlo después
+        float previousMultiplier = currentSpeedMultiplier;
+        
+        // Aplicar el nuevo multiplicador
+        currentSpeedMultiplier = speedMultiplier;
+        initialSpeed = defaultSpeed * currentSpeedMultiplier;
+        
+        // Si la bola ya está en movimiento, actualizar su velocidad actual
+        if (gameStarted && !rb.isKinematic)
+        {
+            Vector3 currentDir = rb.linearVelocity.normalized;
+            rb.linearVelocity = currentDir * initialSpeed;
+        }
+        
+        // Cambiar el color/tamaño de la estela según la velocidad
+        UpdateTrailEffect();
+        
+        // Esperar la duración especificada
+        yield return new WaitForSeconds(duration);
+        
+        // Restaurar la velocidad normal
+        currentSpeedMultiplier = 1.0f;
+        initialSpeed = defaultSpeed;
+        
+        // Actualizar velocidad de la bola
+        if (gameStarted && !rb.isKinematic)
+        {
+            Vector3 currentDir = rb.linearVelocity.normalized;
+            rb.linearVelocity = currentDir * initialSpeed;
+        }
+        
+        // Restaurar efecto de estela
+        UpdateTrailEffect();
+        
+        speedChangeCoroutine = null;
+    }
+
+    // Actualizar el efecto de estela según el estado actual
+    private void UpdateTrailEffect()
+    {
+        if (trailRenderer == null) return;
+        
+        // Activar la estela SOLO si es PowerBall, desactivarla en cualquier otro caso
+        trailRenderer.enabled = isPowerBall;
+        
+        if (isPowerBall)
+        {
+            // Colores de fuego: rojo intenso a naranja/amarillo
+            Color fireStartColor = new Color(1f, 0.3f, 0.1f, 0.8f); // Rojo intenso
+            Color fireEndColor = new Color(1f, 0.6f, 0.0f, 0.4f);   // Naranja/amarillo
+            
+            trailRenderer.startColor = fireStartColor;
+            trailRenderer.endColor = fireEndColor;
+            
+            // Aumentar tamaño y longitud para efecto más impactante
+            trailRenderer.time = 0.8f;        // Estela más larga
+            trailRenderer.startWidth = 0.5f;  // Más ancha
+            trailRenderer.endWidth = 0.05f;   // Termina en punto más visible
+            
+            // Opcional: aumentar la emisión de luz
+            if (trailRenderer.material != null)
+            {
+                trailRenderer.material.SetColor("_EmissionColor", new Color(1f, 0.5f, 0.1f, 1f));
+                trailRenderer.material.EnableKeyword("_EMISSION");
+            }
+        }
     }
 }

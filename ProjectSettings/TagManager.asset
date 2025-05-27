@@ -9,6 +9,7 @@ TagManager:
   - Powerup
   - Ball
   - GodModeWall
+  - Bullet
   layers:
   - Default
   - TransparentFX

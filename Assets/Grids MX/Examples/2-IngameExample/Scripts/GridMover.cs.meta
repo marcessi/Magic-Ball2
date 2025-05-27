@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: 0548408d0e6046042b71ef5108e5084a
+timeCreated: 1448329383
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 51108
+  packageName: Grids MX - The Definitive Snapping Solution
+  packageVersion: 2.0.0
+  assetPath: Assets/Grids MX/Examples/2-IngameExample/Scripts/GridMover.cs
+  uploadId: 229956

@@ -810,6 +810,10 @@ MonoBehaviour:
   limiteDerecho: 7
   maxScaleFactor: 2
   minScaleFactor: 0.5
+  leftShootPoint: {fileID: 0}
+  rightShootPoint: {fileID: 0}
+  bulletPrefab: {fileID: 2989000923634411228, guid: ab18a2c13c5ce8c4abe0771048b52307, type: 3}
+  shootInterval: 0.5
 --- !u!23 &49238720
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -11275,6 +11279,7 @@ MonoBehaviour:
   initialSpeed: 5
   initialDirection: {x: 1, y: 0, z: 1}
   isMainBall: 1
+  trailRenderer: {fileID: 0}
 --- !u!1001 &687607747
 PrefabInstance:
   m_ObjectHideFlags: 0

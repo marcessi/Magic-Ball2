@@ -10,7 +10,10 @@ public class PowerupController : MonoBehaviour
         NormalBall, 
         ExtraBalls, 
         Magnet, 
-        NextLevel 
+        NextLevel,
+        SpeedUp,    
+        SlowDown,
+        Shoot
     }
     
     [Header("Movement")]
@@ -47,6 +50,24 @@ public class PowerupController : MonoBehaviour
         if (ballPrefab == null && powerupType == PowerupType.ExtraBalls)
         {
             ballPrefab = Resources.Load<GameObject>("Prefabs/Ball");
+        }
+
+        if (powerupType == PowerupType.Shoot)
+        {
+            // Buscar el prefab de bala
+            GameObject bulletPrefab = Resources.Load<GameObject>("Prefabs/Bullet");
+            
+            // Buscar la paleta para asignarle el prefab
+            PalletController paddle = FindObjectOfType<PalletController>();
+            if (paddle != null && bulletPrefab != null)
+            {
+                // Usar reflexión para asignar el prefab (ya que el campo puede ser privado)
+                System.Reflection.FieldInfo field = paddle.GetType().GetField("bulletPrefab", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
+                if (field != null)
+                {
+                    field.SetValue(paddle, bulletPrefab);
+                }
+            }
         }
         
         Debug.Log("PowerUp inicializado: " + gameObject.name + " - Tipo: " + powerupType);
@@ -132,6 +153,22 @@ public class PowerupController : MonoBehaviour
             case PowerupType.NextLevel:
                 GoToNextLevel();
                 Debug.Log("PowerUp aplicado: Next Level");
+                break;
+            
+            
+            case PowerupType.SpeedUp:
+                ChangeAllBallsSpeed(2.0f, 20f); // Doble velocidad durante 20 segundos
+                Debug.Log("PowerUp aplicado: Speed Up - Velocidad de la bola aumentada");
+                break;
+            
+            case PowerupType.SlowDown:
+                ChangeAllBallsSpeed(0.5f, 20f); // Mitad de velocidad durante 20 segundos
+                Debug.Log("PowerUp aplicado: Slow Down - Velocidad de la bola reducida");
+                break;
+            case PowerupType.Shoot:
+                // Activar modo de disparo durante 20 segundos
+                paddle.ActivateShootMode(20f);
+                Debug.Log("PowerUp aplicado: Shoot - Disparando balas durante 20 segundos");
                 break;
         }
     }
@@ -261,6 +298,14 @@ public class PowerupController : MonoBehaviour
         else
         {
             Debug.LogError("No se encontró el GameManager para cambiar de nivel");
+        }
+    }
+    private void ChangeAllBallsSpeed(float speedMultiplier, float duration)
+    {
+        BallController[] balls = FindObjectsOfType<BallController>();
+        foreach (var ball in balls)
+        {
+            ball.ChangeSpeed(speedMultiplier, duration);
         }
     }
 }
