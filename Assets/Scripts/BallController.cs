@@ -17,7 +17,7 @@ public class BallController : MonoBehaviour
     private bool isPowerBall = false;
 
 
-    private bool isAttachedToPaddle = false;
+    public bool isAttachedToPaddle = false;
     private Transform attachedPaddle = null;
     private Vector3 attachOffset;
     private PalletController paddleController = null; // Referencia al controlador de la paleta

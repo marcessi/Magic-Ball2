@@ -182,15 +182,46 @@ public class PalletController : MonoBehaviour
     // Comprueba colisiones con la bola para aplicar el efecto imán
     private void OnCollisionEnter(Collision collision)
     {
-        // Solo aplicar el efecto si está activo Y no ha sido usado aún
-        if (magnetModeActive && !magnetEffectUsed && collision.gameObject.CompareTag("Ball"))
+        // Verificar si es la bola
+        if (collision.gameObject.CompareTag("Ball"))
         {
             BallController ball = collision.gameObject.GetComponent<BallController>();
-            if (ball != null)
+            if (ball == null || ball.isAttachedToPaddle) return;
+            
+            // Obtener el punto de contacto
+            ContactPoint contact = collision.contacts[0];
+            
+            // Calcular la posición relativa del impacto en la paleta (entre -1 y 1)
+            Vector3 paddleLocalPoint = transform.InverseTransformPoint(contact.point);
+            
+            // CORRECCIÓN: Invertir el cálculo para que coincida con la orientación real
+            float relativePosition = -paddleLocalPoint.y / (transform.localScale.y * 0.5f);
+            
+            // Clamp entre -1 y 1 por seguridad
+            relativePosition = Mathf.Clamp(relativePosition, -1f, 1f);
+            
+            // Obtener el rigidbody y la velocidad actual de la bola
+            Rigidbody ballRb = ball.GetComponent<Rigidbody>();
+            Vector3 currentVelocity = ballRb.linearVelocity;
+            
+            // Asegurar que la bola tenga una velocidad mínima para evitar que se atasque
+            float minVelocityMagnitude = 10f; // Ajustar según sea necesario
+
+            if (relativePosition < -0.3f) // Golpeó el lado izquierdo
             {
-                // Aplicar efecto imán a la bola
-                ball.AttachToPaddle(transform, this);
-                Debug.Log("Bola adherida a la paleta por efecto imán");
+                // Dirigir hacia la izquierda con componente Z siempre positiva
+                Vector3 newDirection = new Vector3(-Mathf.Abs(currentVelocity.x), 0, Mathf.Abs(currentVelocity.z));
+                Debug.Log("Rebote hacia IZQUIERDA. Posición relativa: " + relativePosition);
+                float finalSpeed = Mathf.Max(currentVelocity.magnitude, minVelocityMagnitude);
+                ballRb.linearVelocity = newDirection.normalized * finalSpeed;
+            }
+            else if (relativePosition > 0.3f) // Golpeó el lado derecho
+            {
+                // Dirigir hacia la derecha con componente Z siempre positiva
+                Vector3 newDirection = new Vector3(Mathf.Abs(currentVelocity.x), 0, Mathf.Abs(currentVelocity.z));
+                Debug.Log("Rebote hacia DERECHA. Posición relativa: " + relativePosition);
+                float finalSpeed = Mathf.Max(currentVelocity.magnitude, minVelocityMagnitude);
+                ballRb.linearVelocity = newDirection.normalized * finalSpeed;
             }
         }
     }
