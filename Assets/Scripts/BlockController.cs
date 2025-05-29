@@ -9,7 +9,6 @@ public class BlockController : MonoBehaviour
     [SerializeField] private float descendSpeed = 2f;
     [SerializeField] private GameObject breakEffect; // Particle effect or animation prefab for breaking
     [SerializeField] private float breakAnimationDuration = 0.3f;
-    [SerializeField] private float blockHeight = 1f; // Height of each block level
     [SerializeField] private float pivotOffset = 0f; // Offset for blocks with displaced pivot
     
     [Header("PowerUp Settings")]
@@ -80,7 +79,7 @@ public class BlockController : MonoBehaviour
         transform.position = position;
         
         // Initialize block level based on y position, accounting for pivot offset
-        blockLevel = Mathf.RoundToInt((transform.position.y - pivotOffset) / blockHeight);
+        blockLevel = Mathf.RoundToInt((transform.position.y - pivotOffset));
 
         position.x = Mathf.Round(position.x);
         position.z = Mathf.Round(position.z - 0.5f) + 0.5f;
@@ -91,7 +90,7 @@ public class BlockController : MonoBehaviour
         // Set initial target position one level down
         targetPosition = new Vector3(
             transform.position.x,
-            blockLevel > 0 ? (blockLevel - 1) * blockHeight + pivotOffset : pivotOffset,
+            blockLevel > 0 ? (blockLevel - 1) + pivotOffset : pivotOffset,
             transform.position.z
         );
     }
@@ -118,7 +117,7 @@ public class BlockController : MonoBehaviour
             {
                 transform.position = targetPosition;
                 // Actualizar el nivel del bloque basado en su nueva posición Y
-                blockLevel = Mathf.RoundToInt((transform.position.y - pivotOffset) / blockHeight);
+                blockLevel = Mathf.RoundToInt((transform.position.y - pivotOffset));
                 isLowLevel = blockLevel == 0;
                 shouldDescend = false;
                 isDescending = false;
@@ -236,11 +235,11 @@ public class BlockController : MonoBehaviour
                 foundFirstBlock = true;
                 accumulatedDistance = distance;
                 
-                // El primer bloque desciende (distancia - 1 unidad de bloque) o al menos 1 si están muy juntos
-                float descendUnits = Mathf.Max(1f, Mathf.Floor(distance / blockHeight));
+                // El primer bloque desciende exactamente su coordenada Y para acabar en el nivel 0
+                float descendUnits = blockAbove.transform.position.y - pivotOffset;
                 
-                Debug.Log($"Primer bloque en {blockAbove.transform.position} descenderá {descendUnits} unidades. Distancia: {distance}");
-                blockAbove.DescendExactAmount(descendUnits * blockHeight);
+                Debug.Log($"Primer bloque en {blockAbove.transform.position} descenderá hasta el nivel 0 ({descendUnits} unidades)");
+                blockAbove.DescendExactAmount(descendUnits);
             }
             else if (previousBlock != null)
             {
@@ -249,11 +248,9 @@ public class BlockController : MonoBehaviour
                 accumulatedDistance = hit.distance;
                 
                 // Este bloque desciende lo mismo que el anterior + (distancia - 1 unidad)
-                float additionalUnits = Mathf.Max(0f, Mathf.Floor(distance / blockHeight) - 1f);
+                float additionalUnits = Mathf.Max(0f, Mathf.Floor(distance) - 1f);
                 float descendUnits = previousBlock.GetDescendUnits() + additionalUnits;
-                
-                Debug.Log($"Bloque en {blockAbove.transform.position} descenderá {descendUnits} unidades. Distancia adicional: {distance}");
-                blockAbove.DescendExactAmount(descendUnits * blockHeight);
+                blockAbove.DescendExactAmount(descendUnits);
             }
             
             previousBlock = blockAbove;
@@ -263,7 +260,7 @@ public class BlockController : MonoBehaviour
     public void DescendExactAmount(float amount)
     {
         // Guardar cuántas unidades desciende este bloque (para la recursión)
-        descendUnits = amount / blockHeight;
+        descendUnits = amount;
         
         // Calcular posición objetivo
         targetPosition = new Vector3(
@@ -276,7 +273,7 @@ public class BlockController : MonoBehaviour
         if (targetPosition.y < pivotOffset)
         {
             targetPosition.y = pivotOffset;
-            descendUnits = (transform.position.y - pivotOffset) / blockHeight;
+            descendUnits = (transform.position.y - pivotOffset);
         }
         
         Debug.Log($"Bloque en {transform.position} descenderá {descendUnits} unidades hasta {targetPosition}");
