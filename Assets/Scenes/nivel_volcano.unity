@@ -11825,7 +11825,7 @@ GameObject:
   - component: {fileID: 684716529}
   - component: {fileID: 684716530}
   - component: {fileID: 684716531}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Ball
   m_TagString: Ball
   m_Icon: {fileID: 0}
@@ -11962,8 +11962,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   initialSpeed: 5
   initialDirection: {x: 1, y: 0, z: 1}
-  isMainBall: 1
   trailRenderer: {fileID: 0}
+  hitBlockSound: {fileID: 0}
+  hitPaddleSound: {fileID: 0}
+  hitWallSound: {fileID: 0}
   isAttachedToPaddle: 0
 --- !u!1001 &687607747
 PrefabInstance:
@@ -32228,6 +32230,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 383347632617531725, guid: fd8b83e74b2cb184b8a69d4bb7817367, type: 3}
+      propertyPath: spotlightIntensity
+      value: 0.25
+      objectReference: {fileID: 0}
     - target: {fileID: 387835418285928985, guid: fd8b83e74b2cb184b8a69d4bb7817367, type: 3}
       propertyPath: m_LocalPosition.x
       value: -15

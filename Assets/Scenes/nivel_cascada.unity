@@ -3000,7 +3000,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e2d5310424ccab34b9096252b56d3074, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  velocidad: 10
   limiteIzquierdo: -6
   limiteDerecho: 7
   maxScaleFactor: 2
@@ -11094,7 +11093,7 @@ GameObject:
   - component: {fileID: 684716529}
   - component: {fileID: 684716530}
   - component: {fileID: 684716531}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Ball
   m_TagString: Ball
   m_Icon: {fileID: 0}
@@ -11231,8 +11230,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   initialSpeed: 5
   initialDirection: {x: 1, y: 0, z: 1}
-  isMainBall: 1
   trailRenderer: {fileID: 0}
+  hitBlockSound: {fileID: 8300000, guid: a1d77e44f3489304eabda80fda40fc03, type: 3}
+  hitPaddleSound: {fileID: 8300000, guid: 052b0f38e9f31e14aa0e03a9365ec3ec, type: 3}
+  hitWallSound: {fileID: 8300000, guid: 3e52807458fdd62418468f6ea6b2c2d3, type: 3}
   isAttachedToPaddle: 0
 --- !u!1001 &687607747
 PrefabInstance:

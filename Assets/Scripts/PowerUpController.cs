@@ -199,85 +199,86 @@ public class PowerupController : MonoBehaviour
         Debug.Log($"Modo PowerBall desactivado en {balls.Length} bolas");
     }
     
-    // Crea dos bolas extra
+    // Crea dos bolas extra clonando una bola existente
     private void CreateExtraBalls()
     {
-        if (ballPrefab == null)
-        {
-            // Buscar la bola actual como plantilla
-            BallController mainBall = FindObjectOfType<BallController>();
-            if (mainBall != null && mainBall.isMainBall) 
-            {
-                ballPrefab = mainBall.gameObject;
-                Debug.Log("Usando la bola principal como ballPrefab");
-            }
-            else
-            {
-                Debug.LogError("No se pudo encontrar ballPrefab ni una bola existente para duplicar");
-                return;
-            }
-        }
+        // Buscar bolas existentes para clonar una
+        BallController[] existingBalls = FindObjectsOfType<BallController>();
         
-        // Busca la bola principal para usar su posición EXACTA
-        BallController existingMainBall = FindMainBall();
-        
-        if (existingMainBall != null)
+        if (existingBalls.Length > 0)
         {
-            Vector3 ballPosition = existingMainBall.transform.position;
+            // Seleccionar una bola aleatoria como referencia para clonar
+            BallController referenceBall = existingBalls[Random.Range(0, existingBalls.Length)];
+            Vector3 ballPosition = referenceBall.transform.position;
             
-            // Crea dos bolas desde la posición exacta de la bola principal
+            // Verificar si la bola de referencia está en modo PowerBall
+            bool isPowerBall = false;
+            System.Reflection.FieldInfo powerBallField = referenceBall.GetType().GetField("isPowerBall", 
+                System.Reflection.BindingFlags.Instance | 
+                System.Reflection.BindingFlags.NonPublic);
+            
+            if (powerBallField != null)
+            {
+                isPowerBall = (bool)powerBallField.GetValue(referenceBall);
+            }
+            
+            // Ángulos predefinidos para las direcciones de las bolas (más separados)
+            float[] angles = { 60f, 120f }; // Una a 60° (hacia arriba-derecha) y otra a 120° (hacia arriba-izquierda)
+            
+            // Crea dos bolas nuevas mediante clonación
             for (int i = 0; i < 2; i++)
             {
-                // Posición ligeramente diferente para evitar superposición - usar solo offset X
-                Vector3 spawnPosition = ballPosition + new Vector3(i == 0 ? -0.5f : 0.5f, 0, 0);
+                // Posiciones más separadas
+                Vector3 spawnPosition = ballPosition + new Vector3(
+                    (i == 0) ? -0.8f : 0.8f, // Una a la izquierda, otra a la derecha
+                    0, 
+                    (i == 0) ? 0.3f : -0.3f); // Ligera variación en Z
                 
-                // Crear la bola con la opción de EXACTA posición
-                GameObject newBall = Instantiate(ballPrefab, spawnPosition, Quaternion.identity);
+                // Clonar la bola de referencia
+                GameObject newBall = Instantiate(referenceBall.gameObject, spawnPosition, Quaternion.identity);
                 
-                // Configurar la bola extra primero antes de cualquier otra acción
+                // Obtener el controller de la nueva bola
                 BallController ballController = newBall.GetComponent<BallController>();
                 if (ballController != null)
                 {
-                    // IMPORTANTE: Primero configurar como bola extra
-                    ballController.SetAsExtraBall();
                     
-                    // IMPORTANTE: Esperar una fracción de segundo para asegurar inicialización
-                    StartCoroutine(LaunchBallDelayed(ballController, i));
+                    // Aplicar el mismo efecto de PowerBall si estaba activo
+                    if (isPowerBall)
+                    {
+                        ballController.SetPowerBallMode(true);
+                    }
+                    
+                    // Limpiar cualquier transformación padre o asociación a la paleta
+                    ballController.transform.SetParent(null);
+                    
+                    // Lanzar la bola con un ángulo predefinido
+                    StartCoroutine(LaunchBallDelayed(ballController, angles[i]));
                 }
             }
+            
+            Debug.Log("Se crearon 2 bolas nuevas con los mismos efectos que la original");
         }
         else
         {
-            Debug.LogWarning("No se encontró la bola principal para crear bolas extras");
+            Debug.LogWarning("No se encontró ninguna bola en el juego para crear bolas adicionales");
         }
     }
 
-    // Añade este método auxiliar para encontrar la bola principal
-    private BallController FindMainBall()
-    {
-        BallController[] balls = FindObjectsOfType<BallController>();
-        foreach (var ball in balls)
-        {
-            if (ball.isMainBall)
-                return ball;
-        }
-        return null;
-    }
-
-    // Añade esta corrutina para asegurar el lanzamiento correcto
-    private IEnumerator LaunchBallDelayed(BallController ball, int index)
+    // Modificado para aceptar un ángulo específico
+    private IEnumerator LaunchBallDelayed(BallController ball, float angle)
     {
         // Esperar un frame para que Unity termine la inicialización
         yield return null;
         
-        // Vector dirección equilibrado para asegurar que vaya hacia arriba/adelante
-        // Dirección 1: hacia arriba-izquierda, Dirección 2: hacia arriba-derecha
-        Vector2 direction = new Vector2((index == 0) ? -0.5f : 0.5f, 1f).normalized;
+        // Convertir ángulo a radianes
+        float radians = angle * Mathf.Deg2Rad;
         
-        // Forzar el lanzamiento inmediato
-        ball.ForceImmediateLaunch(direction);
+        // Convertir ángulo a dirección (x,z)
+        Vector3 direction = new Vector3(Mathf.Cos(radians), 0, Mathf.Sin(radians)).normalized;
         
-        Debug.Log($"Bola extra {index+1} lanzada con dirección {direction}");
+        ball.LaunchBall(direction);
+        
+        Debug.Log($"Bola nueva lanzada con dirección {direction} (ángulo: {angle}°)");
     }
     
     // Activa el modo imán en la paleta

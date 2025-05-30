@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 3814969730888755924}
   - component: {fileID: 6414925512253791594}
   - component: {fileID: 4450168390139534004}
+  - component: {fileID: 3288997297603602089}
   m_Layer: 0
   m_Name: bloque
   m_TagString: Untagged
@@ -108,3 +109,21 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &3288997297603602089
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6524977862832579671}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a6a83bf19fb36643a93a1016eecaa49, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  blockLevel: 0
+  descendSpeed: 2
+  breakEffect: {fileID: 0}
+  breakAnimationDuration: 0.3
+  enablePowerUps: 1
+  powerUpChance: 0.3

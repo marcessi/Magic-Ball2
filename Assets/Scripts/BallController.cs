@@ -7,7 +7,6 @@ public class BallController : MonoBehaviour
     [Header("Ball Settings")]
     [SerializeField] private float initialSpeed = 5f;
     [SerializeField] private Vector3 initialDirection = new Vector3(0f, 0f, 1f).normalized;
-    [SerializeField] public bool isMainBall = true;
 
     [Header("Speed Effects")]
     private float defaultSpeed;
@@ -19,6 +18,11 @@ public class BallController : MonoBehaviour
     private Color normalTrailColor = new Color(0.5f, 0.5f, 1f, 0.5f);
     private Color powerBallTrailColor = new Color(1f, 0.3f, 0.3f, 0.7f);
 
+    [Header("Audio")]
+    private AudioSource audioSource;
+    [SerializeField] private AudioClip hitBlockSound;
+    [SerializeField] private AudioClip hitPaddleSound;
+    [SerializeField] private AudioClip hitWallSound;
 
     private Rigidbody rb;
     private bool gameStarted = false;
@@ -33,13 +37,18 @@ public class BallController : MonoBehaviour
     private Vector3 attachOffset;
     private PalletController paddleController = null; // Referencia al controlador de la paleta
 
+    private float lastBlockSoundTime = 0f;
+    private const float MIN_BLOCK_SOUND_INTERVAL = 0.1f; // Tiempo mínimo entre sonidos de bloque
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
+        defaultSpeed = initialSpeed;
 
-         defaultSpeed = initialSpeed;
+        // Configurar la capa de la bola para evitar colisiones entre bolas
+        gameObject.layer = LayerMask.NameToLayer("Ball");
     
-    // Comprobar si hay un TrailRenderer o crearlo si no existe
+        // Comprobar si hay un TrailRenderer o crearlo si no existe
         if (trailRenderer == null)
         {
             trailRenderer = GetComponent<TrailRenderer>();
@@ -55,34 +64,64 @@ public class BallController : MonoBehaviour
         {
             trailRenderer.enabled = false;
         }
+
+        // Configure audio source if needed
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>();
+            if (audioSource == null)
+            {
+                audioSource = gameObject.AddComponent<AudioSource>();
+            }
+        }
+
+        // Load audio clips if not assigned in inspector
+        if (hitBlockSound == null)
+            hitBlockSound = Resources.Load<AudioClip>("Audio/hit-bloque.mp3");
+        if (hitPaddleSound == null)
+            hitPaddleSound = Resources.Load<AudioClip>("Audio/rebote.ogg");
+        if (hitWallSound == null)
+            hitWallSound = Resources.Load<AudioClip>("Audio/hit-pared.ogg");
     }
 
     private void Start()
     {
-        startPosition = transform.position;
-        
+        startPosition = new Vector3(-9.3f, 0, 0.5f); // Posición inicial de la bola
+
         // Initialize ball at rest
         if (rb != null)
         {
             rb.linearVelocity = Vector3.zero;
         }
 
-        // Solo adjuntar a la paleta si es la bola principal
-        if (isMainBall)
+        // Verificar si esta bola es nueva (creada durante el juego) o es la bola inicial
+        BallController[] allBalls = FindObjectsOfType<BallController>();
+        bool isInitialBall = allBalls.Length <= 1 || Time.timeSinceLevelLoad < 1.0f;
+        
+        // Solo adherir a la paleta si es la bola inicial del nivel
+        if (isInitialBall)
         {
-            // Find and attach to the paddle at the start of the level
             PalletController paddle = FindObjectOfType<PalletController>();
             if (paddle != null)
             {
                 AttachToPaddle(paddle.transform, paddle);
             }
         }
-        // Si es bola extra, asegurarse que no está cinemática
-        else if (rb != null)
+        else
         {
-            rb.isKinematic = false;
+            // Si es una bola adicional, comenzar en movimiento
+            isAttachedToPaddle = false;
+            gameStarted = true;
+            
+            // Asegurarse de que no sea cinemática
+            if (rb != null)
+            {
+                rb.isKinematic = false;
+                
+                // Activar efecto de trail
+                UpdateTrailEffect();
+            }
         }
-        
     }
 
     private void Update()
@@ -127,7 +166,7 @@ public class BallController : MonoBehaviour
     {
         Vector3 incomingVelocity = rb.linearVelocity;
 
-        // En lugar de verificar el tag, verificamos directamente si tiene el componente BlockController
+        // Check for collision with block
         BlockController block = collision.gameObject.GetComponent<BlockController>();
         if (block != null)
         {
@@ -140,6 +179,19 @@ public class BallController : MonoBehaviour
             
             // Damage the block
             block.Hit();
+            
+            // Play block hit sound
+            PlaySound(hitBlockSound);
+        }
+        // Check for collision with paddle
+        else if (collision.gameObject.GetComponent<PalletController>() != null)
+        {
+            PlaySound(hitPaddleSound);
+        }
+        // For all other collisions (walls, etc.)
+        else
+        {
+            PlaySound(hitWallSound);
         }
 
         StartCoroutine(FixBounceAngle(incomingVelocity, collision.contacts[0].normal));
@@ -153,6 +205,7 @@ public class BallController : MonoBehaviour
         if (block != null)
         {
             block.Hit();
+            PlaySound(hitBlockSound);
         }
     }
 
@@ -254,7 +307,6 @@ public class BallController : MonoBehaviour
         // Detener todas las corrutinas para asegurar estado limpio
         StopAllCoroutines();
         
-        
         // Encontrar y adjuntar a la paleta
         PalletController paddle = FindObjectOfType<PalletController>();
         if (paddle != null)
@@ -266,12 +318,6 @@ public class BallController : MonoBehaviour
         if (isPowerBall)
         {
             SetPowerBallMode(false);
-        }
-        
-        // Restaurar color original si es la bola principal
-        if (isMainBall)
-        {
-            GetComponent<Renderer>().material.color = Color.white;
         }
     }
 
@@ -299,42 +345,6 @@ public class BallController : MonoBehaviour
         rb.linearVelocity = launchDirection * initialSpeed;
         UpdateTrailEffect();
         Debug.Log("Bola lanzada con dirección: " + launchDirection);
-    }
-
-    public void ForceImmediateLaunch(Vector2 direction)
-    {
-        // Asegurarse de que no sea cinemático cuando se lanza
-        if (rb == null)
-            rb = GetComponent<Rigidbody>();
-        
-        // CÓDIGO IMPORTANTE: Cancelar cualquier corrutina que pueda interferir
-        StopAllCoroutines();
-        
-        // Asegurar que NO es cinemático
-        rb.isKinematic = false;
-        
-        // Asegurar que la bola no esté adherida a la paleta
-        isAttachedToPaddle = false;
-        attachedPaddle = null;
-        paddleController = null;
-        
-        // Marcar como juego iniciado
-        gameStarted = true;
-        
-        // IMPORTANTE: Asegurar que la bola no tiene gravedad
-        rb.useGravity = false;
-        
-        // Normalizar la dirección y aplicar la velocidad inicial inmediatamente
-        Vector3 launchDirection = new Vector3(direction.x, 0, direction.y).normalized;
-        
-        // Reiniciar completamente la velocidad
-        rb.linearVelocity = Vector3.zero;
-        rb.angularVelocity = Vector3.zero;
-        
-        // Asignar la nueva velocidad
-        rb.linearVelocity = launchDirection * initialSpeed;
-        
-        Debug.Log("Bola lanzada forzosamente con dirección: " + launchDirection);
     }
 
     public void AttachToPaddle(Transform paddle, PalletController controller = null)
@@ -410,29 +420,8 @@ public class BallController : MonoBehaviour
             }
         }
 
-        // Cambiar aspecto visual de la bola para indicar el modo
-        GetComponent<Renderer>().material.color = isPowerBall ? Color.red : Color.white;
         UpdateTrailEffect();
         Debug.Log("Modo PowerBall: " + (enabled ? "ACTIVADO" : "DESACTIVADO"));
-    }
-
-    // Añade este método a BallController.cs si no existe
-    public void SetAsExtraBall()
-    {
-        // Marcar como bola secundaria
-        isMainBall = false;
-        
-        // No necesita estar adherida a la paleta al inicio
-        gameStarted = true;
-        
-        // Cambiar color para distinguirla
-        Renderer renderer = GetComponent<Renderer>();
-        if (renderer != null)
-        {
-            renderer.material.color = new Color(1f, 0.8f, 0.2f); // Color dorado/amarillo
-        }
-        
-        Debug.Log("Bola configurada como bola extra");
     }
 
     private void ConfigureTrailRenderer(TrailRenderer trail)
@@ -533,6 +522,37 @@ public class BallController : MonoBehaviour
                 trailRenderer.material.SetColor("_EmissionColor", new Color(1f, 0.5f, 0.1f, 1f));
                 trailRenderer.material.EnableKeyword("_EMISSION");
             }
+        }
+    }
+
+    private void PlaySound(AudioClip clip)
+    {
+        if (audioSource != null && clip != null)
+        {
+            // Control de volumen según el tipo de sonido
+            float volume = 1.0f;
+            
+            if (clip == hitPaddleSound || clip == hitWallSound)
+            {
+                // Reducir volumen al 60% para rebote y golpe en pared
+                volume = 0.6f;
+            }
+            
+            // Evitar saturación de sonidos de bloque en modo PowerBall
+            if (clip == hitBlockSound)
+            {
+                // Si han pasado menos de X segundos desde el último sonido de bloque, no reproducir
+                if (Time.time - lastBlockSoundTime < MIN_BLOCK_SOUND_INTERVAL)
+                {
+                    return;
+                }
+                
+                // Actualizar el tiempo del último sonido de bloque
+                lastBlockSoundTime = Time.time;
+            }
+            
+            // Reproducir con el volumen adecuado
+            audioSource.PlayOneShot(clip, volume);
         }
     }
 }

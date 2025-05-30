@@ -4,10 +4,10 @@ using System.Collections;
 
 public class PalletController : MonoBehaviour
 {
-    [SerializeField] private float velocidad = 10f;
-    [SerializeField] private float limiteIzquierdo = -7f;
-    [SerializeField] private float limiteDerecho = 6f;
-    
+    private float velocidad = 15f;
+    [SerializeField] private float limiteIzquierdo = -6f;
+    [SerializeField] private float limiteDerecho = 7f;
+
     [Header("Scale Settings")]
     [SerializeField] private float maxScaleFactor = 2.0f; // Escala máxima respecto a la original
     [SerializeField] private float minScaleFactor = 0.5f; // Escala mínima respecto a la original
@@ -60,7 +60,6 @@ public class PalletController : MonoBehaviour
     public void ResetPosition()
     {
         transform.position = initialPosition;
-        // También restauramos la escala original al reiniciar
         transform.localScale = originalScale;
     }
     
