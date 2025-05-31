@@ -7268,7 +7268,6 @@ Transform:
   - {fileID: 1318174906}
   - {fileID: 1186086297}
   - {fileID: 1356225737}
-  - {fileID: 2078150576}
   - {fileID: 579999619}
   - {fileID: 1920766404}
   - {fileID: 1285351396}
@@ -12688,7 +12687,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: b747383878001c94dbaf7aa522f19c05, type: 2}
+  - {fileID: 2100000, guid: 7853398a31ee83a4283672054ca93c56, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -31400,89 +31399,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _grid_index: {x: -1, y: 0, z: -3}
---- !u!1001 &2078150575
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 406483656}
-    m_Modifications:
-    - target: {fileID: 8076921836572474313, guid: 6ca7674f9f5176f4c8a7a6e4dfc919cd, type: 3}
-      propertyPath: m_Name
-      value: -4_0_7_Hierba2
-      objectReference: {fileID: 0}
-    - target: {fileID: 8104420967445534588, guid: 6ca7674f9f5176f4c8a7a6e4dfc919cd, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: -4
-      objectReference: {fileID: 0}
-    - target: {fileID: 8104420967445534588, guid: 6ca7674f9f5176f4c8a7a6e4dfc919cd, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8104420967445534588, guid: 6ca7674f9f5176f4c8a7a6e4dfc919cd, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 7
-      objectReference: {fileID: 0}
-    - target: {fileID: 8104420967445534588, guid: 6ca7674f9f5176f4c8a7a6e4dfc919cd, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8104420967445534588, guid: 6ca7674f9f5176f4c8a7a6e4dfc919cd, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8104420967445534588, guid: 6ca7674f9f5176f4c8a7a6e4dfc919cd, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8104420967445534588, guid: 6ca7674f9f5176f4c8a7a6e4dfc919cd, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8104420967445534588, guid: 6ca7674f9f5176f4c8a7a6e4dfc919cd, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8104420967445534588, guid: 6ca7674f9f5176f4c8a7a6e4dfc919cd, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8104420967445534588, guid: 6ca7674f9f5176f4c8a7a6e4dfc919cd, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 8076921836572474313, guid: 6ca7674f9f5176f4c8a7a6e4dfc919cd, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2078150578}
-  m_SourcePrefab: {fileID: 100100000, guid: 6ca7674f9f5176f4c8a7a6e4dfc919cd, type: 3}
---- !u!4 &2078150576 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 8104420967445534588, guid: 6ca7674f9f5176f4c8a7a6e4dfc919cd, type: 3}
-  m_PrefabInstance: {fileID: 2078150575}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &2078150577 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 8076921836572474313, guid: 6ca7674f9f5176f4c8a7a6e4dfc919cd, type: 3}
-  m_PrefabInstance: {fileID: 2078150575}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &2078150578
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2078150577}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 84c9813977a5d6747b1421948934e188, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _grid_index: {x: -4, y: 0, z: 7}
 --- !u!1001 &2086249011
 PrefabInstance:
   m_ObjectHideFlags: 0
