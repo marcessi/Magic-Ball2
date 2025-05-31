@@ -38,7 +38,7 @@ public class BallController : MonoBehaviour
     private PalletController paddleController = null; // Referencia al controlador de la paleta
 
     private float lastBlockSoundTime = 0f;
-    private const float MIN_BLOCK_SOUND_INTERVAL = 0.1f; // Tiempo mínimo entre sonidos de bloque
+    private const float MIN_BLOCK_SOUND_INTERVAL = 0.25f; // Tiempo mínimo entre sonidos de bloque
 
     private void Awake()
     {
@@ -77,11 +77,11 @@ public class BallController : MonoBehaviour
 
         // Load audio clips if not assigned in inspector
         if (hitBlockSound == null)
-            hitBlockSound = Resources.Load<AudioClip>("Audio/hit-bloque.mp3");
+            hitBlockSound = Resources.Load<AudioClip>("Audio/hit-bloque");
         if (hitPaddleSound == null)
-            hitPaddleSound = Resources.Load<AudioClip>("Audio/rebote.ogg");
+            hitPaddleSound = Resources.Load<AudioClip>("Audio/rebote");
         if (hitWallSound == null)
-            hitWallSound = Resources.Load<AudioClip>("Audio/hit-pared.ogg");
+            hitWallSound = Resources.Load<AudioClip>("Audio/hit-pared");
     }
 
     private void Start()
@@ -527,32 +527,37 @@ public class BallController : MonoBehaviour
 
     private void PlaySound(AudioClip clip)
     {
-        if (audioSource != null && clip != null)
+        if (clip != null)
         {
             // Control de volumen según el tipo de sonido
             float volume = 1.0f;
             
-            if (clip == hitPaddleSound || clip == hitWallSound)
+            if (clip == hitWallSound)
             {
-                // Reducir volumen al 60% para rebote y golpe en pared
-                volume = 0.6f;
+                volume = 0.3f;
+            }
+            else if (clip == hitPaddleSound)
+            {
+                volume = 0.3f;
+            }
+            else if (clip == hitBlockSound)
+            {
+                volume = 0.3f;
             }
             
-            // Evitar saturación de sonidos de bloque en modo PowerBall
-            if (clip == hitBlockSound)
+            // Use AudioManager to play the sound instead of playing directly
+            if (AudioManager.Instance != null)
             {
-                // Si han pasado menos de X segundos desde el último sonido de bloque, no reproducir
-                if (Time.time - lastBlockSoundTime < MIN_BLOCK_SOUND_INTERVAL)
+                AudioManager.Instance.PlaySound(clip, transform.position, volume);
+            }
+            else
+            {
+                // Fallback if AudioManager is not available
+                if (audioSource != null)
                 {
-                    return;
+                    audioSource.PlayOneShot(clip, volume);
                 }
-                
-                // Actualizar el tiempo del último sonido de bloque
-                lastBlockSoundTime = Time.time;
             }
-            
-            // Reproducir con el volumen adecuado
-            audioSource.PlayOneShot(clip, volume);
         }
     }
 }

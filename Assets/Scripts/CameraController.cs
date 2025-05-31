@@ -20,6 +20,7 @@ public class CameraController : MonoBehaviour
     private bool animationCompleted = false;
     private PalletController playerPaddle;
     private Light animationLight;
+    private BallController[] ballControllers;
     
     private void Awake()
     {
@@ -43,6 +44,13 @@ public class CameraController : MonoBehaviour
         if (playerPaddle != null)
         {
             playerPaddle.enabled = false;
+        }
+        
+        // Find and disable all ball controllers
+        ballControllers = FindObjectsOfType<BallController>();
+        foreach (BallController ball in ballControllers)
+        {
+            ball.enabled = false;
         }
         
         // Create animation directional light
@@ -77,6 +85,13 @@ public class CameraController : MonoBehaviour
             if (playerPaddle != null)
             {
                 playerPaddle.enabled = false;
+            }
+            
+            // Disable all ball controllers
+            ballControllers = FindObjectsOfType<BallController>();
+            foreach (BallController ball in ballControllers)
+            {
+                ball.enabled = false;
             }
             
             // Reactivate the directional light
@@ -187,6 +202,12 @@ public class CameraController : MonoBehaviour
         if (playerPaddle != null)
         {
             playerPaddle.enabled = true;
+        }
+
+        // Enable all ball controllers
+        foreach (BallController ball in ballControllers)
+        {
+            ball.enabled = true;
         }
         
         // Disable animation light

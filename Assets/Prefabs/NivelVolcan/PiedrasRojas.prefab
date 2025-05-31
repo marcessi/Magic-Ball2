@@ -71,10 +71,7 @@ MonoBehaviour:
   descendSpeed: 2
   breakEffect: {fileID: 0}
   breakAnimationDuration: 0.3
-  blockHeight: 1
-  pivotOffset: 0
   enablePowerUps: 1
-  powerUpChance: 0.3
 --- !u!1001 &5138961210505836120
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -139,7 +136,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: TileHex_16
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 4673059573794652753, guid: 8c828536b571a274f83f0dfd61f2a502, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []

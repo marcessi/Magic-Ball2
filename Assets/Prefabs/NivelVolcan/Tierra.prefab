@@ -126,10 +126,7 @@ MonoBehaviour:
   descendSpeed: 2
   breakEffect: {fileID: 0}
   breakAnimationDuration: 0.5
-  blockHeight: 1
-  pivotOffset: 0
   enablePowerUps: 1
-  powerUpChance: 0.3
 --- !u!114 &7273548329555733911
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -142,5 +139,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95ee71613e4b41c4d985d68e12f3ca9b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  scrollSpeedX: 0.5
-  scrollSpeedY: 0.3
+  scrollSpeedX: 0.1
+  scrollSpeedY: 0.05

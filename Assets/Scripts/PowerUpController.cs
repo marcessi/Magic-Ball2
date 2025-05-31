@@ -30,6 +30,9 @@ public class PowerupController : MonoBehaviour
     [Header("Visual")]
     [SerializeField] private float powerupScale = 10.0f;
 
+    [Header("Audio")]
+    private AudioClip powerUpSound;
+
     private void Start()
     {
         transform.localScale *= powerupScale;
@@ -44,6 +47,13 @@ public class PowerupController : MonoBehaviour
             Rigidbody rb = gameObject.AddComponent<Rigidbody>();
             rb.useGravity = false;
             rb.isKinematic = false;
+        }
+
+        // Load the power up sound
+        powerUpSound = Resources.Load<AudioClip>("Audio/powerUp");
+        if (powerUpSound == null)
+        {
+            Debug.LogWarning("Could not load powerUp sound from Resources/Audio");
         }
         
         // Cargar automáticamente el prefab de la bola si es necesario
@@ -112,6 +122,17 @@ public class PowerupController : MonoBehaviour
     
     private void ApplyPowerupEffect(PalletController paddle)
     {
+        // Usar AudioManager para reproducir el sonido del power-up
+        if (powerUpSound != null && AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySound(powerUpSound, transform.position, 0.3f);
+        }
+        else if (powerUpSound != null)
+        {
+            // Fallback si no hay AudioManager
+            AudioSource.PlayClipAtPoint(powerUpSound, transform.position, 0.3f);
+        }
+
         if (GameManager.Instance != null)
         {
             GameManager.Instance.AddPoints(20); // 20 puntos por powerup

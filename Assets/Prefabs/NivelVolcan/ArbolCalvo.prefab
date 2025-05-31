@@ -71,10 +71,7 @@ MonoBehaviour:
   descendSpeed: 2
   breakEffect: {fileID: 0}
   breakAnimationDuration: 0.3
-  blockHeight: 1
-  pivotOffset: 0
   enablePowerUps: 1
-  powerUpChance: 0.3
 --- !u!1001 &4073089123927749813
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -135,7 +132,9 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 7512718050578362261, guid: 48201c2de0ef7a74e8be28f08029b15c, type: 3}
+    - {fileID: 4260228944154160650, guid: 48201c2de0ef7a74e8be28f08029b15c, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
