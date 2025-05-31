@@ -1,135 +1,138 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using TMPro; // Cambiar de UnityEngine.UI a TMPro
-using System.Collections.Generic; // Añade esta línea para resolver los errores
-using UnityEngine.UI; // Añade esta línea para encontrar Button
+using TMPro;
+using UnityEngine.UI;
+using UnityEngine.EventSystems;
+using System.Collections;
 
 public class MenuController : MonoBehaviour
 {
     [Header("Menú Principal")]
     public GameObject mainMenu;
-    public GameObject playMenu;
-    public GameObject creditsMenu;
-    public GameObject highscoresMenu;
-    
+    public GameObject creditsPanel;
+    public Text highScoreText;
+
     [Header("Game Over")]
     public GameObject gameOverMenu;
-    public TMP_InputField playerNameInput; // Cambiar de InputField a TMP_InputField
-    public TMP_Text scoreText; // Cambiar de Text a TMP_Text
+    public TMP_InputField playerNameInput;
+    public TMP_Text scoreText;
     
-    [Header("Medal Images")]
-    public Sprite goldMedalSprite;
-    public Sprite silverMedalSprite;
-    public Sprite bronzeMedalSprite;
+    private int m_OpenParameterId;
+    private Animator m_Open;
+    private GameObject m_PreviouslySelected;
     
-    // Define estos colores al inicio de la clase
-    private Color rowColor1 = new Color(0.25f, 0.25f, 0.25f, 0.5f); // Color oscuro
-    private Color rowColor2 = new Color(0.4f, 0.4f, 0.4f, 0.5f); // Color un poco más claro
-    
-    // Añade esta variable a tu clase
     public GameObject nameInputPanel;
+    
+    // Constantes para las animaciones
+    const string k_OpenTransitionName = "Open";
+    const string k_ClosedStateName = "Closed";
+    
+    // Control de modos
+    private bool isMainMenuScene = false;
 
     private void Start()
     {
-        // Asegurar que el juego está en velocidad normal al iniciarse
+        // Asegurar que el tiempo está corriendo
         Time.timeScale = 1;
         
-        // Buscar o crear el panel de entrada de nombre
-        FindOrCreateNameInputPanel();
+        // Inicializar animación
+        m_OpenParameterId = Animator.StringToHash(k_OpenTransitionName);
         
-        // Mostrar menú principal por defecto
-        ShowMain();
+        // Determinar en qué escena estamos
+        isMainMenuScene = SceneManager.GetActiveScene().buildIndex == 0;
         
-        // Asignar listeners a los botones del GameOver programáticamente
-        SetupGameOverButtons();
-        
-        // Crear o actualizar las referencias a los sprites de medalla si no existen
-        if (goldMedalSprite == null || silverMedalSprite == null || bronzeMedalSprite == null)
+        if (isMainMenuScene)
         {
-            Debug.LogWarning("Faltan sprites de medallas. Por favor, asígnalos en el inspector.");
+            // Configuración para escena de menú principal
+            ShowMainMenu();
+            UpdateHighScoreDisplay();
+            
+            // Ocultar créditos inicialmente
+            if (creditsPanel != null)
+                creditsPanel.SetActive(false);
+        }
+        else
+        {
+            // Configuración para escenas de nivel
+            if (gameOverMenu != null)
+                gameOverMenu.SetActive(false);
+                
+            FindOrCreateNameInputPanel();
+            SetupGameOverButtons();
         }
         
-        // Nuevos logs para depuración
-        Debug.Log("MenuController iniciado. gameOverMenu asignado: " + (gameOverMenu != null));
-        Debug.Log("nameInputPanel asignado: " + (nameInputPanel != null));
-        Debug.Log("playerNameInput asignado: " + (playerNameInput != null));
+        Debug.Log("MenuController iniciado en modo: " + (isMainMenuScene ? "Menú Principal" : "Nivel de Juego"));
     }
     
-    // Métodos para el menú principal
-    public void ShowMain()
+    // FUNCIONES PARA EL MENÚ PRINCIPAL
+    
+    // Mostrar menú principal
+    public void ShowMainMenu()
     { 
         if (mainMenu != null)
-            mainMenu.SetActive(true);
-        
-        if (playMenu != null)
-            playMenu.SetActive(false); 
-        
-        if (creditsMenu != null)
-            creditsMenu.SetActive(false);
-        
-        if (highscoresMenu != null)
-            highscoresMenu.SetActive(false);
-        
-        if (gameOverMenu != null)
-            gameOverMenu.SetActive(false);
+        {
+            OpenPanel(mainMenu.GetComponent<Animator>());
+            
+            // Ocultar otros paneles
+            if (creditsPanel != null)
+                creditsPanel.SetActive(false);
+        }
     }
     
-    public void ShowPlay()
-    { 
-        if (mainMenu != null)
-            mainMenu.SetActive(false); 
-        
-        // Solo activar playMenu si existe
-        if (playMenu != null)
-            playMenu.SetActive(true);
-        
-        if (creditsMenu != null)
-            creditsMenu.SetActive(false);
-        
-        if (highscoresMenu != null)
-            highscoresMenu.SetActive(false);
-    }
-    
+    // Mostrar créditos
     public void ShowCredits()
-    { 
-        if (mainMenu != null)
-            mainMenu.SetActive(false);
-        
-        if (playMenu != null)
-            playMenu.SetActive(false);
-        
-        if (creditsMenu != null)
-            creditsMenu.SetActive(true);
-        
-        if (highscoresMenu != null)
-            highscoresMenu.SetActive(false);
-    }
-    
-    public void ShowHighscores()
     {
-        if (mainMenu != null)
-            mainMenu.SetActive(false);
-        
-        if (playMenu != null)
-            playMenu.SetActive(false);
-        
-        if (creditsMenu != null)
-            creditsMenu.SetActive(false);
-        
-        if (highscoresMenu != null)
-            highscoresMenu.SetActive(true);
-    
-        // Cargar las puntuaciones
-        LoadHighscores();
+        if (creditsPanel != null)
+        {
+            OpenPanel(creditsPanel.GetComponent<Animator>());
+        }
     }
     
-    // Botones de navegación
+    // Actualizar el texto de mayor puntuación
+    private void UpdateHighScoreDisplay()
+    {
+        if (highScoreText != null)
+        {
+            // Obtener el número de puntuaciones guardadas
+            int scoreCount = PlayerPrefs.GetInt("ScoreCount", 0);
+            
+            if (scoreCount > 0)
+            {
+                // Buscar la puntuación más alta
+                string bestPlayerName = "";
+                int highestScore = 0;
+                
+                for (int i = 0; i < scoreCount; i++)
+                {
+                    string name = PlayerPrefs.GetString("ScoreName_" + i, "???");
+                    int score = PlayerPrefs.GetInt("ScoreValue_" + i, 0);
+                    
+                    if (score > highestScore)
+                    {
+                        highestScore = score;
+                        bestPlayerName = name;
+                    }
+                }
+                
+                highScoreText.text = $"{bestPlayerName} - {highestScore} pts";
+            }
+            else
+            {
+                highScoreText.text = "¡Sé el primero en jugar!";
+            }
+        }
+    }
+    
+    // BOTONES DE NAVEGACIÓN
+    
+    // Iniciar juego
     public void StartGame()
     {
-        // Cargar primera escena de juego (asumiendo que es la escena 1)
+        // Cargar primera escena de juego (escena 1)
         SceneManager.LoadScene(1);
     }
     
+    // Salir del juego
     public void ExitGame()
     {
         #if UNITY_EDITOR
@@ -139,7 +142,9 @@ public class MenuController : MonoBehaviour
         #endif
     }
     
-    // Métodos para el menú de Game Over
+    // FUNCIONES PARA GAME OVER
+    
+    // Reiniciar nivel
     public void RestartGame()
     {
         // Restaurar el tiempo ANTES de realizar las acciones
@@ -151,26 +156,11 @@ public class MenuController : MonoBehaviour
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
     
+    // Volver al menú principal
     public void ReturnToMainMenu()
     {
         // Restaurar el tiempo
         Time.timeScale = 1f;
-        
-        // IMPORTANTE: Antes de salir al menú principal, restaurar el estado de los botones
-        if (gameOverMenu != null)
-        {
-            Transform[] buttons = new Transform[] {
-                gameOverMenu.transform.Find("RestartButton"),
-                gameOverMenu.transform.Find("MenuButton"),
-                gameOverMenu.transform.Find("SaveButton")
-            };
-            
-            foreach (var button in buttons)
-            {
-                if (button != null)
-                    button.gameObject.SetActive(true);
-            }
-        }
         
         if (GameManager.Instance != null)
             GameManager.Instance.GoToMainMenu();
@@ -178,7 +168,49 @@ public class MenuController : MonoBehaviour
             SceneManager.LoadScene(0); // Menú principal
     }
     
-    // Modifica el método SaveHighscore()
+    // Mostrar Game Over
+    public void ShowGameOverMenu(int score)
+    {
+        if (!isMainMenuScene)
+        {
+            // Buscar o crear el panel de entrada de nombre
+            FindOrCreateNameInputPanel();
+            
+            // Asegurar que el panel está activo
+            if (gameOverMenu != null)
+            {
+                gameOverMenu.SetActive(true);
+                
+                // Mostrar botones
+                Transform[] buttons = new Transform[] {
+                    gameOverMenu.transform.Find("RestartButton"),
+                    gameOverMenu.transform.Find("MenuButton"),
+                    gameOverMenu.transform.Find("SaveButton")
+                };
+                
+                foreach (var button in buttons)
+                {
+                    if (button != null)
+                        button.gameObject.SetActive(true);
+                }
+                
+                // Ocultar el panel de entrada de nombre
+                if (nameInputPanel != null)
+                    nameInputPanel.SetActive(false);
+                
+                // Actualizar el texto de la puntuación
+                if (scoreText != null)
+                    scoreText.text = "Score: " + score;
+                
+                // Configurar los listeners de los botones
+                SetupGameOverButtons();
+            }
+        }
+    }
+    
+    // SISTEMA DE GESTIÓN DE PUNTUACIONES
+    
+    // Guardar puntuación
     public void SaveHighscore()
     {
         Debug.Log("Botón Save presionado");
@@ -215,36 +247,9 @@ public class MenuController : MonoBehaviour
             playerNameInput.Select();
             playerNameInput.ActivateInputField();
         }
-        else
-        {
-            // Intentar encontrar el playerNameInput
-            playerNameInput = nameInputPanel.GetComponentInChildren<TMP_InputField>();
-            if (playerNameInput != null)
-            {
-                playerNameInput.text = "";
-                playerNameInput.Select();
-                playerNameInput.ActivateInputField();
-            }
-        }
     }
-
-    private void HideGameOverButtons()
-    {
-        if (gameOverMenu == null) return;
-        
-        Transform[] buttons = new Transform[] {
-            gameOverMenu.transform.Find("RestartButton"),
-            gameOverMenu.transform.Find("MenuButton"),
-            gameOverMenu.transform.Find("SaveButton")
-        };
-        
-        foreach (var button in buttons)
-        {
-            if (button != null)
-                button.gameObject.SetActive(false);
-        }
-    }
-
+    
+    // Guardar con nombre predeterminado
     private void SaveWithDefaultName()
     {
         string defaultName = "Player";
@@ -252,23 +257,10 @@ public class MenuController : MonoBehaviour
         SaveScore(defaultName, score);
         Debug.Log("Puntuación guardada con nombre predeterminado: " + defaultName);
         
-        // IMPORTANTE: No llamar directamente a ReturnToMainMenu aquí
-        // Mostrar mensaje de confirmación y esperar un momento
         StartCoroutine(ShowSavedMessageAndReturn());
     }
-
-    private System.Collections.IEnumerator ShowSavedMessageAndReturn()
-    {
-        // Aquí podrías mostrar un mensaje temporal de "¡Puntuación guardada!"
-        
-        // Esperar un momento antes de volver al menú
-        yield return new WaitForSecondsRealtime(1.5f);
-        
-        // Ahora sí, volver al menú principal
-        ReturnToMainMenu();
-    }
     
-    // Añade este nuevo método para el botón confirmar
+    // Confirmar guardar puntuación
     public void ConfirmSaveHighscore()
     {
         // Restaurar el tiempo
@@ -290,7 +282,7 @@ public class MenuController : MonoBehaviour
         }
         else
         {
-            // Si no hay nombre, mostrar un mensaje de error o usar un nombre predeterminado
+            // Si no hay nombre, usar un nombre predeterminado
             string defaultName = "Player";
             int score = PlayerPrefs.GetInt("CurrentScore", 0);
             SaveScore(defaultName, score);
@@ -298,7 +290,7 @@ public class MenuController : MonoBehaviour
         }
     }
     
-    // Sistema de puntuaciones
+    // Guardar puntuación
     private void SaveScore(string playerName, int score)
     {
         // Obtenemos la cantidad actual de puntuaciones guardadas
@@ -311,137 +303,106 @@ public class MenuController : MonoBehaviour
         // Incrementamos el contador de puntuaciones
         PlayerPrefs.SetInt("ScoreCount", scoreCount + 1);
         PlayerPrefs.Save();
+        
+        // Actualizar el texto de mayor puntuación si estamos en el menú principal
+        if (isMainMenuScene)
+        {
+            UpdateHighScoreDisplay();
+        }
     }
     
-    // Método para mostrar highscores con TMP
-    private void LoadHighscores()
+    // Mostrar mensaje y volver
+    private System.Collections.IEnumerator ShowSavedMessageAndReturn()
     {
-        Transform scoreContainer = highscoresMenu.transform.Find("ScoreContainer");
-        if (scoreContainer == null)
-        {
-            Debug.LogWarning("No se encontró el contenedor de puntuaciones");
+        yield return new WaitForSecondsRealtime(1.5f);
+        ReturnToMainMenu();
+    }
+    
+    // SISTEMA DE GESTIÓN DE PANELES Y ANIMACIONES
+    
+    // Funcionalidad de PanelManager para abrir paneles con animación
+    public void OpenPanel(Animator anim)
+    {
+        if (anim == null)
             return;
-        }
-        
-        foreach (Transform child in scoreContainer)
-        {
-            if (child.name != "ScoreRowTemplate")
-                Destroy(child.gameObject);
-        }
-        
-        Transform template = scoreContainer.Find("ScoreRowTemplate");
-        if (template == null)
-        {
-            Debug.LogWarning("No se encontró la plantilla de fila de puntuación");
+            
+        if (m_Open == anim)
             return;
-        }
-        
-        template.gameObject.SetActive(false);
-        
-        int scoreCount = PlayerPrefs.GetInt("ScoreCount", 0);
-        List<KeyValuePair<string, int>> scores = new List<KeyValuePair<string, int>>();
-        
-        for (int i = 0; i < scoreCount; i++)
-        {
-            string name = PlayerPrefs.GetString("ScoreName_" + i, "???");
-            int score = PlayerPrefs.GetInt("ScoreValue_" + i, 0);
-            scores.Add(new KeyValuePair<string, int>(name, score));
-        }
-        
-        scores.Sort((x, y) => y.Value.CompareTo(x.Value));
-        
-        int displayCount = Mathf.Min(scores.Count, 10);
-        
-        // Modifica el bucle for que crea las filas
-        for (int i = 0; i < displayCount; i++)
-        {
-            Transform newRow = Instantiate(template, scoreContainer);
-            newRow.gameObject.SetActive(true);
-            newRow.name = "ScoreRow_" + i;
-            
-            // Aplicar color alternado
-            Image rowBackground = newRow.GetComponent<Image>();
-            if (rowBackground == null)
-            {
-                // Añadir imagen de fondo si no existe
-                rowBackground = newRow.gameObject.AddComponent<Image>();
-                rowBackground.color = (i % 2 == 0) ? rowColor1 : rowColor2;
-            }
-            else
-            {
-                rowBackground.color = (i % 2 == 0) ? rowColor1 : rowColor2;
-            }
-            
-            // Obtener referencias a los textos
-            TMP_Text rankText = newRow.Find("RankText").GetComponent<TMP_Text>();
-            TMP_Text nameText = newRow.Find("NameText").GetComponent<TMP_Text>();
-            TMP_Text scoreText = newRow.Find("ScoreText").GetComponent<TMP_Text>();
-            
-            // Verificar si necesitamos mostrar una medalla
-            Image medalImage = newRow.Find("MedalImage")?.GetComponent<Image>();
-            
-            // Si estamos en el top 3 y tenemos una imagen para medalla
-            if (i < 3 && medalImage != null)
-            {
-                // Establecer la medalla según la posición
-                if (i == 0 && goldMedalSprite != null)
-                {
-                    medalImage.sprite = goldMedalSprite;
-                    medalImage.gameObject.SetActive(true);
-                    if (rankText != null) rankText.gameObject.SetActive(false);
-                }
-                else if (i == 1 && silverMedalSprite != null)
-                {
-                    medalImage.sprite = silverMedalSprite;
-                    medalImage.gameObject.SetActive(true);
-                    if (rankText != null) rankText.gameObject.SetActive(false);
-                }
-                else if (i == 2 && bronzeMedalSprite != null)
-                {
-                    medalImage.sprite = bronzeMedalSprite;
-                    medalImage.gameObject.SetActive(true);
-                    if (rankText != null) rankText.gameObject.SetActive(false);
-                }
-            }
-            else
-            {
-                // Para posiciones 4+ mostrar el número
-                if (medalImage != null) medalImage.gameObject.SetActive(false);
-                if (rankText != null) 
-                {
-                    rankText.gameObject.SetActive(true);
-                    rankText.text = (i + 1).ToString();
-                }
-            }
-            
-            // Establecer el nombre y puntuación
-            if (nameText) nameText.text = scores[i].Key;
-            if (scoreText) scoreText.text = scores[i].Value.ToString();
-        }
-        
-        // Eliminar toda la sección de creación del encabezado y solo verificar si existe
-        Transform headerRow = highscoresMenu.transform.Find("HeaderRow");
-        if (headerRow == null)
-        {
-            Debug.LogWarning("El encabezado 'HeaderRow' no existe. Por favor, créelo manualmente en el editor.");
-        }
-        
-        // Añadir línea separadora después del encabezado
-        GameObject separator = new GameObject("Separator", typeof(RectTransform), typeof(Image));
-        separator.transform.SetParent(highscoresMenu.transform, false);
-        separator.GetComponent<Image>().color = new Color(1f, 0.8f, 0.2f); // Color dorado
-        RectTransform sepRect = separator.GetComponent<RectTransform>();
-        sepRect.sizeDelta = new Vector2(350, 2); // Ancho y alto de la línea
-        // Posicionarlo entre el encabezado y el contenedor
-        separator.transform.SetSiblingIndex(scoreContainer.GetSiblingIndex());
+
+        anim.gameObject.SetActive(true);
+        var newPreviouslySelected = EventSystem.current.currentSelectedGameObject;
+
+        anim.transform.SetAsLastSibling();
+
+        CloseCurrent();
+
+        m_PreviouslySelected = newPreviouslySelected;
+
+        m_Open = anim;
+        m_Open.SetBool(m_OpenParameterId, true);
+
+        GameObject go = FindFirstEnabledSelectable(anim.gameObject);
+
+        SetSelected(go);
     }
 
-    // Añadir este método y llamarlo desde Start() y también cuando el GameOver se active
+    // Encontrar el primer seleccionable habilitado
+    static GameObject FindFirstEnabledSelectable(GameObject gameObject)
+    {
+        GameObject go = null;
+        var selectables = gameObject.GetComponentsInChildren<Selectable>(true);
+        foreach (var selectable in selectables) {
+            if (selectable.IsActive() && selectable.IsInteractable()) {
+                go = selectable.gameObject;
+                break;
+            }
+        }
+        return go;
+    }
+
+    // Cerrar el panel actual
+    public void CloseCurrent()
+    {
+        if (m_Open == null)
+            return;
+
+        m_Open.SetBool(m_OpenParameterId, false);
+        SetSelected(m_PreviouslySelected);
+        StartCoroutine(DisablePanelDelayed(m_Open));
+        m_Open = null;
+    }
+
+    // Deshabilitar el panel con delay para permitir la animación
+    IEnumerator DisablePanelDelayed(Animator anim)
+    {
+        bool closedStateReached = false;
+        bool wantToClose = true;
+        while (!closedStateReached && wantToClose)
+        {
+            if (!anim.IsInTransition(0))
+                closedStateReached = anim.GetCurrentAnimatorStateInfo(0).IsName(k_ClosedStateName);
+
+            wantToClose = !anim.GetBool(m_OpenParameterId);
+
+            yield return new WaitForEndOfFrame();
+        }
+
+        if (wantToClose)
+            anim.gameObject.SetActive(false);
+    }
+
+    // Establecer el objeto seleccionado
+    private void SetSelected(GameObject go)
+    {
+        EventSystem.current.SetSelectedGameObject(go);
+    }
+    
+    // FUNCIONES PARA EL PANEL DE ENTRADA DE NOMBRE
+    
+    // Configurar botones del GameOver
     public void SetupGameOverButtons()
     {
         if (gameOverMenu == null) return;
-        
-        Debug.Log("Configurando botones del Game Over...");
         
         // Limpiar listeners anteriores y asignar nuevos
         Button[] allButtons = gameOverMenu.GetComponentsInChildren<Button>(true);
@@ -452,78 +413,99 @@ public class MenuController : MonoBehaviour
             if (button.name == "RestartButton" || button.name.Contains("Restart"))
             {
                 button.onClick.AddListener(RestartGame);
-                Debug.Log("Listener de Restart asignado a: " + button.name);
             }
             else if (button.name == "MenuButton" || button.name.Contains("Menu"))
             {
                 button.onClick.AddListener(ReturnToMainMenu);
-                Debug.Log("Listener de Menu asignado a: " + button.name);
             }
             else if (button.name == "SaveButton" || button.name.Contains("Save"))
             {
                 button.onClick.AddListener(SaveHighscore);
-                Debug.Log("Listener de Save asignado a: " + button.name);
             }
             else if (button.name == "ConfirmButton" || button.name.Contains("Confirm"))
             {
                 button.onClick.AddListener(ConfirmSaveHighscore);
-                Debug.Log("Listener de Confirm asignado a: " + button.name);
             }
         }
     }
-
-    // Método para mostrar el GameOver correctamente
-    public void ShowGameOverMenu(int score)
+    
+    // Método para buscar o crear el panel de entrada de nombre
+    private void FindOrCreateNameInputPanel()
     {
-        // Buscar o crear el panel de entrada de nombre
-        FindOrCreateNameInputPanel();
-        
-        // Asegurar que el panel está activo
-        if (gameOverMenu != null)
+        // Si ya está asignado, no hacer nada
+        if (nameInputPanel != null)
+            return;
+            
+        // Solo buscar en escenas de juego
+        if (!isMainMenuScene && gameOverMenu != null)
         {
-            gameOverMenu.SetActive(true);
+            // Buscar como hijo del gameOverMenu
+            nameInputPanel = gameOverMenu.transform.Find("NameInputPanel")?.gameObject;
             
-            // Mostrar TODOS los botones y asegurar que estén activos
-            Transform[] buttons = new Transform[] {
-                gameOverMenu.transform.Find("RestartButton"),
-                gameOverMenu.transform.Find("MenuButton"),
-                gameOverMenu.transform.Find("SaveButton")
-            };
-            
-            foreach (var button in buttons)
+            // Buscar en la escena por nombre
+            if (nameInputPanel == null)
             {
-                if (button != null)
-                    button.gameObject.SetActive(true);
+                nameInputPanel = GameObject.Find("NameInputPanel");
             }
             
-            // Ocultar el panel de entrada de nombre
+            // Buscar recursivamente
+            if (nameInputPanel == null)
+            {
+                Canvas[] canvases = FindObjectsOfType<Canvas>();
+                foreach (Canvas canvas in canvases)
+                {
+                    Transform found = FindRecursive(canvas.transform, "NameInputPanel");
+                    if (found != null)
+                    {
+                        nameInputPanel = found.gameObject;
+                        break;
+                    }
+                }
+            }
+            
+            // Crear dinámicamente si es necesario
+            if (nameInputPanel == null)
+            {
+                nameInputPanel = CreateNameInputPanel();
+            }
+            
             if (nameInputPanel != null)
+            {
+                // Asegurar que tenemos la referencia al inputField
+                if (playerNameInput == null)
+                {
+                    playerNameInput = nameInputPanel.GetComponentInChildren<TMP_InputField>();
+                }
+                
+                // Configurar el botón Confirmar
+                Button confirmButton = nameInputPanel.GetComponentInChildren<Button>();
+                if (confirmButton != null)
+                {
+                    confirmButton.onClick.RemoveAllListeners();
+                    confirmButton.onClick.AddListener(ConfirmSaveHighscore);
+                }
+                
+                // Ocultar panel inicialmente
                 nameInputPanel.SetActive(false);
-            
-            // Actualizar el texto de la puntuación
-            if (scoreText != null)
-                scoreText.text = "Score: " + score;
-            
-            // Configurar los listeners de los botones
-            SetupGameOverButtons();
+            }
         }
     }
-
-    // Añadir este nuevo método para crear el panel dinámicamente
+    
+    // Crear panel de entrada de nombre dinámicamente
     private GameObject CreateNameInputPanel()
     {
-        // Crear el panel de entrada
+        // Crear panel base
         GameObject panel = new GameObject("NameInputPanel");
         panel.transform.SetParent(gameOverMenu.transform, false);
         
-        // Configurar como panel
+        // Configurar panel
         RectTransform rectTransform = panel.AddComponent<RectTransform>();
         rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
         rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
         rectTransform.pivot = new Vector2(0.5f, 0.5f);
         rectTransform.sizeDelta = new Vector2(300, 150);
         
-        // Añadir imagen de fondo
+        // Añadir fondo
         Image background = panel.AddComponent<Image>();
         background.color = new Color(0.1f, 0.1f, 0.1f, 0.9f);
         
@@ -540,7 +522,7 @@ public class MenuController : MonoBehaviour
         titleText.alignment = TextAlignmentOptions.Center;
         titleText.font = TMP_Settings.defaultFontAsset;
         
-        // Crear campo de entrada
+        // Crear input field
         GameObject inputObj = new GameObject("PlayerNameInput");
         inputObj.transform.SetParent(panel.transform, false);
         RectTransform inputRect = inputObj.AddComponent<RectTransform>();
@@ -549,7 +531,7 @@ public class MenuController : MonoBehaviour
         inputRect.sizeDelta = new Vector2(0, 0);
         TMP_InputField inputField = inputObj.AddComponent<TMP_InputField>();
         
-        // Configurar componentes visuales del TMP_InputField
+        // Configurar el área de texto
         GameObject textAreaObj = new GameObject("TextArea");
         textAreaObj.transform.SetParent(inputObj.transform, false);
         RectTransform textAreaRect = textAreaObj.AddComponent<RectTransform>();
@@ -559,6 +541,7 @@ public class MenuController : MonoBehaviour
         Image textAreaImage = textAreaObj.AddComponent<Image>();
         textAreaImage.color = new Color(0.2f, 0.2f, 0.2f);
         
+        // Texto del input field
         GameObject textObj = new GameObject("Text");
         textObj.transform.SetParent(textAreaObj.transform, false);
         RectTransform textRect = textObj.AddComponent<RectTransform>();
@@ -571,10 +554,10 @@ public class MenuController : MonoBehaviour
         text.alignment = TextAlignmentOptions.Left;
         text.font = TMP_Settings.defaultFontAsset;
         
-        // Asignar componentes al InputField
+        // Asignar componentes
         inputField.textComponent = text;
         
-        // Crear botón de confirmación
+        // Botón de confirmación
         GameObject buttonObj = new GameObject("ConfirmButton");
         buttonObj.transform.SetParent(panel.transform, false);
         RectTransform buttonRect = buttonObj.AddComponent<RectTransform>();
@@ -585,6 +568,7 @@ public class MenuController : MonoBehaviour
         Image buttonImage = buttonObj.AddComponent<Image>();
         buttonImage.color = new Color(0.2f, 0.6f, 0.9f);
         
+        // Texto del botón
         GameObject buttonTextObj = new GameObject("Text");
         buttonTextObj.transform.SetParent(buttonObj.transform, false);
         RectTransform buttonTextRect = buttonTextObj.AddComponent<RectTransform>();
@@ -597,86 +581,16 @@ public class MenuController : MonoBehaviour
         buttonText.alignment = TextAlignmentOptions.Center;
         buttonText.font = TMP_Settings.defaultFontAsset;
         
-        // Añadir listener al botón
+        // Añadir listener
         button.onClick.AddListener(ConfirmSaveHighscore);
         
-        // Asignar el inputField a la variable del controlador
+        // Asignar el input field
         playerNameInput = inputField;
         
-        // Esconder el panel inicialmente
+        // Ocultar panel
         panel.SetActive(false);
         
         return panel;
-    }
-
-    // Método para buscar o crear el panel de entrada de nombre
-    private void FindOrCreateNameInputPanel()
-    {
-        // Si ya está asignado, no hacer nada
-        if (nameInputPanel != null)
-            return;
-
-        Debug.Log("Buscando nameInputPanel...");
-        
-        // 1. Buscar como hijo del gameOverMenu
-        if (gameOverMenu != null)
-        {
-            nameInputPanel = gameOverMenu.transform.Find("NameInputPanel")?.gameObject;
-        }
-        
-        // 2. Buscar en la escena por nombre
-        if (nameInputPanel == null)
-        {
-            nameInputPanel = GameObject.Find("NameInputPanel");
-        }
-        
-        // 3. Buscar recursivamente en la jerarquía del canvas
-        if (nameInputPanel == null)
-        {
-            Canvas[] canvases = FindObjectsOfType<Canvas>();
-            foreach (Canvas canvas in canvases)
-            {
-                Transform found = FindRecursive(canvas.transform, "NameInputPanel");
-                if (found != null)
-                {
-                    nameInputPanel = found.gameObject;
-                    break;
-                }
-            }
-        }
-        
-        // 4. Si aún no se encuentra, crearlo dinámicamente
-        if (nameInputPanel == null && gameOverMenu != null)
-        {
-            Debug.Log("Creando nameInputPanel dinámicamente...");
-            nameInputPanel = CreateNameInputPanel();
-        }
-        
-        if (nameInputPanel != null)
-        {
-            Debug.Log("nameInputPanel asignado correctamente");
-            
-            // Asegurar que tenemos la referencia al inputField
-            if (playerNameInput == null)
-            {
-                playerNameInput = nameInputPanel.GetComponentInChildren<TMP_InputField>();
-                if (playerNameInput == null)
-                    Debug.LogWarning("No se encontró un TMP_InputField en el nameInputPanel");
-            }
-            
-            // AÑADIR ESTO: Configurar el botón Confirmar
-            Button confirmButton = nameInputPanel.GetComponentInChildren<Button>();
-            if (confirmButton != null)
-            {
-                confirmButton.onClick.RemoveAllListeners();
-                confirmButton.onClick.AddListener(ConfirmSaveHighscore);
-                Debug.Log("Listener de ConfirmSaveHighscore asignado al botón");
-            }
-            else
-            {
-                Debug.LogWarning("No se encontró un botón en el nameInputPanel");
-            }
-        }
     }
 
     // Método auxiliar para buscar recursivamente
