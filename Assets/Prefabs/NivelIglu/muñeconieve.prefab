@@ -71,9 +71,7 @@ MonoBehaviour:
   descendSpeed: 2
   breakEffect: {fileID: 0}
   breakAnimationDuration: 0.3
-  pivotOffset: 0
   enablePowerUps: 1
-  powerUpChance: 0.3
 --- !u!1001 &7132092544920054189
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -138,7 +136,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: snowman
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 5124194119190068834, guid: 33e0229781589094db520ae4fecfde0f, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
