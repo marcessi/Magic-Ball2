@@ -11,8 +11,6 @@ GameObject:
   - component: {fileID: 8923612322307923973}
   - component: {fileID: 5510384723676458912}
   - component: {fileID: 7754115522541230954}
-  - component: {fileID: 2080487364880103831}
-  - component: {fileID: -594635029921251872}
   m_Layer: 0
   m_Name: HardRock_01
   m_TagString: Untagged
@@ -88,45 +86,3 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &2080487364880103831
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8114600924028484287}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: -745552649630363952, guid: c05d24c6a1cdb724a918afd47347dcd1, type: 3}
---- !u!114 &-594635029921251872
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8114600924028484287}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8a6a83bf19fb36643a93a1016eecaa49, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  blockLevel: 0
-  descendSpeed: 2
-  breakEffect: {fileID: 0}
-  breakAnimationDuration: 0.3
-  blockHeight: 1
-  pivotOffset: 0
-  enablePowerUps: 1
-  powerUpChance: 0.3

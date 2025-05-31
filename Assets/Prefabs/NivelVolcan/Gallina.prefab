@@ -50,9 +50,7 @@ MonoBehaviour:
   descendSpeed: 2
   breakEffect: {fileID: 0}
   breakAnimationDuration: 0.3
-  pivotOffset: 0
   enablePowerUps: 1
-  powerUpChance: 0.3
 --- !u!65 &5677803399345815070
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -96,15 +94,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8881504610387854135, guid: 3bd8aaa741c3e934e940c36dd4fa3fca, type: 3}
       propertyPath: m_LocalScale.x
-      value: 1.2
+      value: 1.5
       objectReference: {fileID: 0}
     - target: {fileID: 8881504610387854135, guid: 3bd8aaa741c3e934e940c36dd4fa3fca, type: 3}
       propertyPath: m_LocalScale.y
-      value: 1.2
+      value: 1.5
       objectReference: {fileID: 0}
     - target: {fileID: 8881504610387854135, guid: 3bd8aaa741c3e934e940c36dd4fa3fca, type: 3}
       propertyPath: m_LocalScale.z
-      value: 1.2
+      value: 1.5
       objectReference: {fileID: 0}
     - target: {fileID: 8881504610387854135, guid: 3bd8aaa741c3e934e940c36dd4fa3fca, type: 3}
       propertyPath: m_LocalPosition.x

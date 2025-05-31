@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 6035539497217269660}
   - component: {fileID: 1420104128427208317}
   - component: {fileID: 4962775861399958838}
-  - component: {fileID: 8379590045459248475}
   m_Layer: 0
   m_Name: Rampa 2
   m_TagString: Untagged
@@ -51,10 +50,7 @@ MonoBehaviour:
   descendSpeed: 2
   breakEffect: {fileID: 0}
   breakAnimationDuration: 0.3
-  blockHeight: 1
-  pivotOffset: 0
   enablePowerUps: 1
-  powerUpChance: 0.3
 --- !u!65 &4962775861399958838
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -76,20 +72,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &8379590045459248475
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1003805561007983912}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 95ee71613e4b41c4d985d68e12f3ca9b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  scrollSpeedX: 1
-  scrollSpeedY: -5
 --- !u!1001 &3239741785874124089
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -150,8 +132,30 @@ PrefabInstance:
     - {fileID: 3451118302482216456, guid: 39e2a36d9eb154d39b77fc97095043cf, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 39e2a36d9eb154d39b77fc97095043cf, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2551930797137862278}
   m_SourcePrefab: {fileID: 100100000, guid: 39e2a36d9eb154d39b77fc97095043cf, type: 3}
+--- !u!1 &2320680010832769128 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 39e2a36d9eb154d39b77fc97095043cf, type: 3}
+  m_PrefabInstance: {fileID: 3239741785874124089}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2551930797137862278
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2320680010832769128}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95ee71613e4b41c4d985d68e12f3ca9b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  scrollSpeedX: 0.1
+  scrollSpeedY: 0.05
 --- !u!4 &3134336566583438034 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 39e2a36d9eb154d39b77fc97095043cf, type: 3}
