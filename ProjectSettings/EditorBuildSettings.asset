@@ -5,9 +5,6 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 0
-    path: Assets/Scenes/nivel_romano.unity
-    guid: 77936e8c267535c428bc63e477df75fa
   - enabled: 1
     path: Assets/Scenes/Menu 3D.unity
     guid: fcad57b4836b37841ae0c2a86f48ad25

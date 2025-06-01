@@ -204,6 +204,8 @@ public class BlockController : MonoBehaviour
         {
             Instantiate(breakEffect, transform.position, Quaternion.identity);
         }
+
+        CreateExplosionEffect();
         
         // Visual breaking animation
         Vector3 originalScale = transform.localScale;
@@ -232,7 +234,7 @@ public class BlockController : MonoBehaviour
         {
             SpawnRandomPowerUp();
         }
-        CreateExplosionEffect();
+        
         
         // Destroy the block
         Destroy(gameObject);
@@ -245,17 +247,15 @@ public class BlockController : MonoBehaviour
         // Si no hay prefab de explosión asignado, crear uno básico con partículas
         if (explosionEffectPrefab == null)
         {
-            // Crear un sistema de partículas básico para la explosión
+            // Crear sistema de partículas básico
             GameObject explosionObj = new GameObject("BlockExplosion");
             explosionObj.transform.position = transform.position;
             
             // Añadir sistema de partículas
             ParticleSystem ps = explosionObj.AddComponent<ParticleSystem>();
-            
-            // IMPORTANTE: Asegurarse de que el sistema no esté reproduciéndose
             ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             
-            // Configurar el sistema de partículas para una pequeña explosión
+            // Configuración básica
             var main = ps.main;
             main.startColor = new ParticleSystem.MinMaxGradient(Color.yellow, Color.red);
             main.startSize = new ParticleSystem.MinMaxCurve(0.1f, 0.3f);
@@ -277,15 +277,17 @@ public class BlockController : MonoBehaviour
             // Tiempo de vida
             main.startLifetime = new ParticleSystem.MinMaxCurve(0.3f, 0.8f);
             
-            // Crear y asignar material con el shader correcto
+            // SOLUCIÓN: Asignar un material con shader built-in
             ParticleSystemRenderer renderer = ps.GetComponent<ParticleSystemRenderer>();
             if (renderer != null)
             {
-                // Crear un material nuevo para las partículas
-                Material particleMaterial = new Material(Shader.Find("Legacy Shaders/Particles/Additive"));
-                if (particleMaterial != null)
+                // Usar un shader que siempre está incluido en las builds
+                renderer.material = new Material(Shader.Find("Mobile/Particles/Additive"));
+                
+                // Si el anterior falla, probar estos alternativos
+                if (renderer.material == null || renderer.material.shader == null)
                 {
-                    renderer.material = particleMaterial;
+                    renderer.material = new Material(Shader.Find("Sprites/Default"));
                 }
             }
             
@@ -308,6 +310,7 @@ public class BlockController : MonoBehaviour
             Destroy(explosion, explosionLifetime);
         }
         
+        // Aplicar fuerza explosiva a objetos cercanos con físic
     }
 
     private void NotifyBlocksAbove()
