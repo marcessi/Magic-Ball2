@@ -300,16 +300,11 @@ public class GameManager : MonoBehaviour
             }
             else
             {
-                Debug.Log("¡Has completado todos los niveles! Volviendo al menú principal.");
+                Debug.Log("¡Has completado todos los niveles! Mostrando Game Over para celebrar tu victoria.");
                 
-                // Reproducir sonido de victoria final si no se reprodujo antes
-                if (!musicSource.isPlaying || musicSource.clip.name != victoryAudioTrack)
-                {
-                    PlayVictorySound();
-                }
-                
-                // Esperar un poco antes de volver al menú principal
-                StartCoroutine(ReturnToMainMenuWithDelay(3f));
+                // NUEVO: En lugar de ir al menú principal, mostrar el Game Over
+                // con la puntuación final como celebración de victoria
+                ShowVictoryGameOver();
             }
         }
         catch (System.Exception e)
@@ -323,11 +318,47 @@ public class GameManager : MonoBehaviour
         Invoke("ResetChangingLevelFlag", 3f);
     }
     
-    // Nuevo método para volver al menú principal con delay
-    private IEnumerator ReturnToMainMenuWithDelay(float delay)
+    // NUEVO: Método para mostrar el Game Over como pantalla de victoria final
+    private void ShowVictoryGameOver()
     {
-        yield return new WaitForSeconds(delay);
-        GoToMainMenu();
+        // Reproducir sonido de victoria
+        PlayVictorySound();
+        
+        // Pausar el juego
+        Time.timeScale = 0;
+        
+        // Asegurar que tenemos un panel de Game Over
+        EnsureGameOverPanel();
+        
+        if (gameOverPanel != null)
+        {
+            // Activar el panel
+            gameOverPanel.SetActive(true);
+            
+            // Buscar el TMP_Text para mostrar un mensaje especial
+            TMP_Text scoreTextUI = gameOverPanel.GetComponentInChildren<TMP_Text>();
+            if (scoreTextUI != null)
+            {
+                // Mensaje especial de victoria
+                scoreTextUI.text = "¡VICTORIA FINAL!\nPuntuación: " + currentScore;
+            }
+            
+            // Buscar el GameOverPanelController para configurarlo adecuadamente
+            GameOverPanelController controller = gameOverPanel.GetComponent<GameOverPanelController>();
+            if (controller != null)
+            {
+                controller.Show(currentScore);
+            }
+            
+            // Configurar los botones del panel
+            ConfigureMenuController();
+        }
+        else
+        {
+            Debug.LogError("No se pudo encontrar o crear el panel de Game Over");
+            // Fallback
+            GameOver();
+        }
     }
     
     // Método para reiniciar el nivel currentLevel
