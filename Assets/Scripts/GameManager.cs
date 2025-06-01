@@ -569,7 +569,7 @@ public class GameManager : MonoBehaviour
             {
                 musicSource.clip = levelMusic;
                 musicSource.volume = 0.1f; // Establecer volumen a 0.1 para música de niveles
-                musicSoiurce.loop = true; // Asegurar que la música se repite
+                musicSource.loop = true; // Asegurar que la música se repite
                 musicSource.Play();
                 Debug.Log($"Reproduciendo música: {levelMusicTracks[musicIndex]} con volumen: 0.25");
             }
