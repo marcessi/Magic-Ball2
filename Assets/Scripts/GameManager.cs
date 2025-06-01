@@ -1,30 +1,28 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using TMPro; // Cambiar de UnityEngine.UI a TMPro
+using TMPro;
+using UnityEngine.UI; // Añadir este namespace para usar Image
 
 public class GameManager : MonoBehaviour
 {
     // Singleton para acceder al GameManager desde cualquier script
     public static GameManager Instance { get; private set; }
     
-    [Header("Game Settings")]
-    [SerializeField] private bool isPaused = false;
-    [SerializeField] private int currentLevel = 1;
-    [SerializeField] private int totalLevels = 1; // Ajusta este valor al número total de niveles
-    
-    [Header("References")]
-    [SerializeField] private GameObject gameOverPanel;
-    [SerializeField] private GameObject victoryPanel;
-    [SerializeField] private GameObject pausePanel;
-
-    [Header("Score System")]
-    [SerializeField] private int currentScore = 0;
-    [SerializeField] private TMP_Text scoreText; // Cambiar de Text a TMP_Text
-
-    // Añadir esta propiedad para las vidas
-    [Header("Lives")]
+    [Header("Game State")]
+    [SerializeField] private int currentLevel = 0;
+    [SerializeField] private int currentLives = 3;
     [SerializeField] private int maxLives = 3;
-
+    [SerializeField] private int currentScore = 0;
+    [SerializeField] private bool gameInProgress = false;
+    
+    [Header("UI References")]
+    [SerializeField] private GameObject gameOverPanelPrefab;
+    [SerializeField] private TMP_Text scoreText;
+    [SerializeField] private GameObject gameOverPanel; // Variable faltante
+    [SerializeField] private GameObject victoryPanel; // Variable faltante
+    [SerializeField] private GameObject pausePanel;   // Variable faltante
+    private bool isPaused = false;                    // Variable faltante
+    
     private void Awake()
     {
         // Configuración del singleton
@@ -32,67 +30,67 @@ public class GameManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            InitializeGame();
         }
         else
         {
             Destroy(gameObject);
-            return;
         }
     }
     
-    private void Start()
+    // Nueva función para inicializar variables
+    private void InitializeGame()
     {
-        // Inicializa el nivel actual basado en el índice de la escena
-        currentLevel = SceneManager.GetActiveScene().buildIndex;
+        // Registrar para eventos de carga de escena
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+    
+    private void OnDestroy()
+    {
+        // Desregistrar eventos al destruir
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+    
+    // Esta función se llama cada vez que se carga una escena
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        currentLevel = scene.buildIndex;
         
-        // Oculta paneles de UI si existen
+        // Si es escena de menú principal (índice 0)
+        if (currentLevel == 0)
+        {
+            // Resetear estado del juego al volver al menú principal
+            if (gameInProgress) 
+            {
+                gameInProgress = false;
+            }
+        }
+        else // Si es una escena de nivel
+        {
+            // Primera vez que iniciamos un nivel desde el menú
+            if (!gameInProgress)
+            {
+                ResetGameState();
+                gameInProgress = true;
+            }
+        }
+        
+        // Ocultar todos los paneles
         HideAllPanels();
-    }
-
-    // Método para ir al siguiente nivel con verificación
-    public void GoToNextLevel()
-    {
-        try
-        {
-            // Calcula el índice del siguiente nivel
-            int nextLevelIndex = currentLevel + 1;
-            
-            // Verifica si existe el siguiente nivel
-            if (nextLevelIndex < SceneManager.sceneCountInBuildSettings)
-            {
-                Debug.Log("Cargando siguiente nivel: " + nextLevelIndex);
-                SceneManager.LoadScene(nextLevelIndex);
-                currentLevel = nextLevelIndex;
-            }
-            else
-            {
-                Debug.Log("¡Has completado todos los niveles! Volviendo al menú principal.");
-                GoToMainMenu();
-            }
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError("Error al cambiar de nivel: " + e.Message);
-            // Fallback: volver al menú principal
-            GoToMainMenu();
-        }
-    }
-    
-    // Método para reiniciar el nivel actual
-    public void RestartLevel()
-    {
-        // Reiniciar la puntuación al comenzar un nuevo nivel
-        currentScore = 0;
-        UpdateScoreUI();
         
-        // Cargar la escena del nivel actual
-        SceneManager.LoadScene(currentLevel);
+        // Buscar/actualizar referencias de UI en la nueva escena
+        FindUIReferences();
+        UpdateUI();
+        
+        // Configurar MenuController si existe
+        ConfigureMenuController();
     }
     
-    // Método para volver al menú principal
-    public void GoToMainMenu()
+    // Resetea el estado del juego al iniciar una nueva partida
+    public void ResetGameState()
     {
-        SceneManager.LoadScene(0); // Asumimos que el menú principal es la escena 0
+        currentLives = maxLives;
+        currentScore = 0;
     }
     
     // Método para pausar/reanudar el juego
@@ -128,6 +126,12 @@ public class GameManager : MonoBehaviour
     public int GetCurrentScore()
     {
         return currentScore;
+    }
+    
+    // Método para obtener las vidas actuales (faltaba este método)
+    public int GetCurrentLives()
+    {
+        return currentLives;
     }
 
     // Método para mostrar gameover
@@ -172,6 +176,9 @@ public class GameManager : MonoBehaviour
             Debug.LogWarning("No se encontró TMP_Text en el GameOverPanel");
         }
         
+        // IMPORTANTE: Asegurar que los botones funcionen
+        //SetupGameOverButtons();
+        
         // Configurar MenuController si existe
         ConfigureMenuController();
     }
@@ -207,28 +214,6 @@ public class GameManager : MonoBehaviour
         SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        // Si es una escena de juego (cualquiera menos la 0), reiniciar puntuación
-        if (scene.buildIndex > 0)
-        {
-            currentScore = 0;
-            UpdateScoreUI();
-        }
-        
-        // Inicializa el nivel actual basado en el índice de la escena
-        currentLevel = scene.buildIndex;
-        
-        // Oculta paneles de UI si existen
-        HideAllPanels();
-        
-        // Busca referencias a paneles de UI
-        FindUIReferences();
-        
-        // Configura MenuController si existe
-        ConfigureMenuController();
-    }
-
     private void FindUIReferences()
     {
         // Buscar el panel de GameOver
@@ -243,6 +228,30 @@ public class GameManager : MonoBehaviour
             {
                 scoreText = hud.GetComponentInChildren<TMP_Text>();
             }
+            
+            // Si no lo encontramos, buscar directamente
+            if (scoreText == null)
+            {
+                GameObject scoreObject = GameObject.Find("ScoreText");
+                if (scoreObject != null)
+                {
+                    scoreText = scoreObject.GetComponent<TMP_Text>();
+                }
+            }
+        }
+        
+        // Buscar el panel de victoria
+        if (victoryPanel == null)
+            victoryPanel = GameObject.Find("VictoryPanel");
+            
+        // Buscar el panel de pausa
+        if (pausePanel == null)
+            pausePanel = GameObject.Find("PausePanel");
+            
+        // Si estamos en una escena de nivel, asegurarnos que el GameOver esté listo
+        if (currentLevel > 0)
+        {
+            EnsureGameOverPanel();
         }
     }
 
@@ -252,20 +261,178 @@ public class GameManager : MonoBehaviour
         MenuController menuController = FindObjectOfType<MenuController>();
         if (menuController != null)
         {
-            // Buscar nameInputPanel
-            GameObject nameInputPanel = GameObject.Find("NameInputPanel");
-            if (nameInputPanel != null)
-            {
-                menuController.nameInputPanel = nameInputPanel;
-                Debug.Log("NameInputPanel asignado automáticamente al MenuController");
-            }
-            
-            // Asignar ScoreText del GameOver
+            // Si tenemos GameOver panel, asignarlo al MenuController
             if (gameOverPanel != null)
             {
+                menuController.gameOverMenu = gameOverPanel;
+                
+                // Asignar ScoreText del GameOver
                 TMP_Text scoreTextUI = gameOverPanel.GetComponentInChildren<TMP_Text>();
                 if (scoreTextUI != null)
                     menuController.scoreText = scoreTextUI;
+                    
+                // Asignar nameInputPanel si existe
+                Transform nameInputPanelTrans = gameOverPanel.transform.Find("NameInputPanel");
+                if (nameInputPanelTrans != null)
+                {
+                    menuController.nameInputPanel = nameInputPanelTrans.gameObject;
+                    Debug.Log("NameInputPanel asignado automáticamente al MenuController");
+                    
+                    // Buscar el input field
+                    TMP_InputField inputField = nameInputPanelTrans.GetComponentInChildren<TMP_InputField>();
+                    if (inputField != null)
+                        menuController.playerNameInput = inputField;
+                }
+                
+                // Configurar los botones con el MenuController también
+                menuController.SetupGameOverButtons();
+            }
+        }
+    }
+    
+    // Método para ir al siguiente nivel con verificación
+    public void GoToNextLevel()
+    {
+        try
+        {
+            // Calcula el índice del siguiente nivel
+            int nextLevelIndex = currentLevel + 1;
+            
+            // Verifica si existe el siguiente nivel
+            if (nextLevelIndex < SceneManager.sceneCountInBuildSettings)
+            {
+                Debug.Log("Cargando siguiente nivel: " + nextLevelIndex);
+                SceneManager.LoadScene(nextLevelIndex);
+                currentLevel = nextLevelIndex;
+            }
+            else
+            {
+                Debug.Log("¡Has completado todos los niveles! Volviendo al menú principal.");
+                GoToMainMenu();
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("Error al cambiar de nivel: " + e.Message);
+            // Fallback: volver al menú principal
+            GoToMainMenu();
+        }
+    }
+    
+    // Método para reiniciar el nivel currentLevel
+    public void RestartLevel()
+    {
+        // Reiniciar la puntuación al comenzar un nuevo nivel
+        currentScore = 0;
+        UpdateScoreUI();
+        
+        // Cargar la escena del nivel actual
+        SceneManager.LoadScene(currentLevel);
+    }
+    
+    // Método para volver al menú principal
+    public void GoToMainMenu()
+    {
+        SceneManager.LoadScene(0); // Asumimos que el menú principal es la escena 0
+    }
+    
+    // Método que se llama cuando el jugador pierde una vida
+    public void LoseLife()
+    {
+        currentLives--;
+        UpdateUI();
+        
+        if (currentLives <= 0)
+        {
+            GameOver();
+        }
+    }
+    
+    // Método para asegurar que existe un panel de GameOver y configurar sus botones
+    private void EnsureGameOverPanel()
+    {
+        if (gameOverPanel == null)
+            gameOverPanel = GameObject.Find("GameOverPanel");
+            
+        if (gameOverPanel == null && gameOverPanelPrefab != null)
+        {
+            // Si no existe un panel en la escena, instanciar desde prefab
+            Canvas mainCanvas = FindObjectOfType<Canvas>();
+            if (mainCanvas != null)
+            {
+                gameOverPanel = Instantiate(gameOverPanelPrefab, mainCanvas.transform);
+                Debug.Log("GameOver panel instantiated");
+            }
+        }
+        
+        // Ocultar el panel al iniciar
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.SetActive(false);
+            
+            // Configurar los botones del panel - SOLUCIÓN PRINCIPAL
+            //SetupGameOverButtons();
+        }
+    }
+
+    // Método para configurar los botones del GameOver (nuevo método)
+    private void SetupGameOverButtons()
+    {
+       
+    }
+
+    // Método para guardar puntuación con nombre predeterminado (nuevo método)
+    private void SaveDefaultScore()
+    {
+        string defaultName = "Player";
+        
+        // Guardar la puntuación
+        int scoreCount = PlayerPrefs.GetInt("ScoreCount", 0);
+        PlayerPrefs.SetString("ScoreName_" + scoreCount, defaultName);
+        PlayerPrefs.SetInt("ScoreValue_" + scoreCount, currentScore);
+        PlayerPrefs.SetInt("ScoreCount", scoreCount + 1);
+        PlayerPrefs.Save();
+        
+        Debug.Log("Puntuación guardada con nombre predeterminado: " + defaultName);
+        
+        // Volver al menú principal después de un tiempo
+        Invoke("GoToMainMenu", 1.5f);
+    }
+    
+    // Actualizar toda la UI con los valores actuales
+    private void UpdateUI()
+    {
+        // Actualizar puntuación
+        if (scoreText != null)
+        {
+            scoreText.text = "Score: " + currentScore;
+        }
+        
+        // Actualizar vidas (si tienes un display de vidas)
+        UpdateLivesDisplay();
+    }
+    
+    // Actualizar display de vidas
+    private void UpdateLivesDisplay()
+    {
+        // Buscar textos de vidas y corazones
+        TMP_Text livesText = GameObject.Find("LivesText")?.GetComponent<TMP_Text>();
+        if (livesText != null)
+        {
+            livesText.text = "Lives: " + currentLives;
+        }
+        
+        // Actualizar corazones visuales si existen
+        GameObject heartsContainer = GameObject.Find("HUD");
+        if (heartsContainer != null)
+        {
+            Image[] heartImages = heartsContainer.GetComponentsInChildren<Image>(true);
+            for (int i = 0; i < heartImages.Length; i++)
+            {
+                if (i < currentLives)
+                    heartImages[i].enabled = true;
+                else
+                    heartImages[i].enabled = false;
             }
         }
     }

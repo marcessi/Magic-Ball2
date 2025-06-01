@@ -39,33 +39,27 @@ public class LimitController : MonoBehaviour
             // Si es la última bola, restamos vida y hacemos reset
             if (allBalls.Length <= 1)
             {
-                // Restar una vida
-                currentLives--;
-                UpdateLivesDisplay();
-                
-                // Si aún quedan vidas, resetear la pelota y los powerups
-                if (currentLives > 0)
+                // Notificar al GameManager que perdimos una vida
+                if (GameManager.Instance != null)
                 {
-                    // Restablecer todos los powerups activos
-                    ResetAllPowerups();
+                    GameManager.Instance.LoseLife();
                     
-                    // Reset the paddle to its initial position
-                    if (paddle != null)
+                    // Si aún quedan vidas, resetear la pelota y los powerups
+                    if (GameManager.Instance.GetCurrentLives() > 0)
                     {
-                        paddle.ResetPosition();
+                        // Restablecer todos los powerups activos
+                        ResetAllPowerups();
+                        
+                        // Reset the paddle to its initial position
+                        if (paddle != null)
+                        {
+                            paddle.ResetPosition();
+                        }
+                        
+                        // Reset the ball to the starting position
+                        collidedBall.ResetBall();
                     }
-                    
-                    // Reset the ball instead of destroying it
-                    collidedBall.ResetBall();
-                }
-                else
-                {
-                    // Game over
-                    ShowGameOver();
-                    SaveCurrentScore();
-                    
-                    // Podemos destruir la bola ya que es game over
-                    Destroy(collidedBall.gameObject);
+                    // El GameOver lo maneja el GameManager cuando las vidas llegan a 0
                 }
             }
             else

@@ -24276,7 +24276,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1849428924}
-  - component: {fileID: 1849428923}
   - component: {fileID: 1849428925}
   m_Layer: 0
   m_Name: GameMAnager
@@ -24285,27 +24284,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1849428923
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1849428922}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 32856acfd67b3d64ea666da5b790e77f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  isPaused: 0
-  currentLevel: 1
-  totalLevels: 1
-  gameOverPanel: {fileID: 11948226}
-  victoryPanel: {fileID: 0}
-  pausePanel: {fileID: 0}
-  currentScore: 0
-  scoreText: {fileID: 1770377481}
-  maxLives: 3
 --- !u!4 &1849428924
 Transform:
   m_ObjectHideFlags: 0
@@ -24334,15 +24312,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mainMenu: {fileID: 0}
-  playMenu: {fileID: 0}
-  creditsMenu: {fileID: 0}
-  highscoresMenu: {fileID: 0}
+  creditsPanel: {fileID: 0}
+  highScoreText: {fileID: 0}
   gameOverMenu: {fileID: 11948226}
   playerNameInput: {fileID: 84371140}
   scoreText: {fileID: 0}
-  goldMedalSprite: {fileID: 21300008, guid: 1eaee135ce037439d925cee5e41ce026, type: 3}
-  silverMedalSprite: {fileID: 21300010, guid: 1eaee135ce037439d925cee5e41ce026, type: 3}
-  bronzeMedalSprite: {fileID: 21300012, guid: 1eaee135ce037439d925cee5e41ce026, type: 3}
   nameInputPanel: {fileID: 582521468}
 --- !u!4 &1856759045 stripped
 Transform:

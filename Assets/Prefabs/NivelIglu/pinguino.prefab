@@ -130,6 +130,10 @@ PrefabInstance:
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: 86438eff103c43147977154415a94fbf, type: 2}
+    - target: {fileID: 2197702747431416024, guid: a63344b3eb6078743b80d669cbf820b9, type: 3}
+      propertyPath: m_AnimatePhysics
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2197702747431416027, guid: a63344b3eb6078743b80d669cbf820b9, type: 3}
       propertyPath: m_Enabled
       value: 0

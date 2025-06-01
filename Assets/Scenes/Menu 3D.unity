@@ -1769,15 +1769,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 32856acfd67b3d64ea666da5b790e77f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isPaused: 0
-  currentLevel: 1
-  totalLevels: 1
+  currentLevel: 0
+  currentLives: 3
+  maxLives: 3
+  currentScore: 0
+  gameInProgress: 0
+  gameOverPanelPrefab: {fileID: 8121668173539652959, guid: 40ed6ccae6f9d56478e8ffe44026b45d, type: 3}
+  scoreText: {fileID: 0}
   gameOverPanel: {fileID: 0}
   victoryPanel: {fileID: 0}
   pausePanel: {fileID: 0}
-  currentScore: 0
-  scoreText: {fileID: 0}
-  maxLives: 3
 --- !u!1001 &1150316642
 PrefabInstance:
   m_ObjectHideFlags: 0
