@@ -225,8 +225,8 @@ public class BallController : MonoBehaviour
         // Get the current velocity after physics has applied the bounce
         Vector3 currentVelocity = rb.linearVelocity;
 
-        // Ángulo mínimo permitido respecto a la normal (45°)
-        float minBounceAngle = 45f;
+        // Ángulo mínimo permitido respecto a la normal (30°)
+        float minBounceAngle = 30f;
 
         // Ángulo real entre la velocidad y la normal
         float angleWithNormal = Vector3.Angle(currentVelocity, surfaceNormal);

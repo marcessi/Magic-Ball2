@@ -96,6 +96,13 @@ public class PowerupController : MonoBehaviour
             // NO necesitamos llamar a DecrementActivePowerUps aquí porque OnDestroy() lo hará
             Destroy(gameObject);
         }
+        
+        // Detectar colisión con el muro de God Mode
+        if (collision.gameObject.GetComponent<GodModeController>() != null)
+        {
+            Destroy(gameObject);
+            Debug.Log("PowerUp destruido por colisión con muro de God Mode");
+        }
     }
 
     private void OnTriggerEnter(Collider other)
@@ -112,6 +119,12 @@ public class PowerupController : MonoBehaviour
             {
                 ApplyPowerupEffect(paddle);
             }
+            Destroy(gameObject);
+        }
+        
+        // Detectar colisión con el muro de God Mode
+        if (other.GetComponent<GodModeController>() != null)
+        {
             Destroy(gameObject);
         }
     }
