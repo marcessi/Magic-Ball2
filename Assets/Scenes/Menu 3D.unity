@@ -403,7 +403,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Sergi Sanamrtin Soria
+  m_Text: Sergi Sanmartin Soria
 --- !u!222 &490449712
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1779,6 +1779,10 @@ MonoBehaviour:
   gameOverPanel: {fileID: 0}
   victoryPanel: {fileID: 0}
   pausePanel: {fileID: 0}
+  musicSource: {fileID: 0}
+  mainMenuMusicTrack: Audio/MainMenu
+  victoryAudioTrack: Audio/Victory
+  gameOverAudioTrack: Audio/GameOver
 --- !u!1001 &1150316642
 PrefabInstance:
   m_ObjectHideFlags: 0

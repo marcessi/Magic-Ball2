@@ -15,6 +15,13 @@ public class BlockController : MonoBehaviour
     [Header("PowerUp Settings")]
     private bool enablePowerUps = true;
     private float powerUpChance = 0.3f;
+
+    [Header("Explosion Effect")]
+    [SerializeField] private GameObject explosionEffectPrefab;  // Prefab de partículas para la explosión
+    [SerializeField] private float explosionForce = 10f;       // Fuerza de la explosión
+    [SerializeField] private float explosionRadius = 2f;       // Radio de la explosión
+    [SerializeField] private float explosionLifetime = 1f;     // Duración de la explosión
+
     
     // Variables para el seguimiento de bloques
     private static int totalBlocksInitial = 0;
@@ -225,6 +232,7 @@ public class BlockController : MonoBehaviour
         {
             SpawnRandomPowerUp();
         }
+        CreateExplosionEffect();
         
         // Destroy the block
         Destroy(gameObject);
@@ -232,18 +240,87 @@ public class BlockController : MonoBehaviour
         // Comprobar si todos los bloques han sido destruidos
         CheckAllBlocksDestroyed();
     }
+    private void CreateExplosionEffect()
+    {
+        // Si no hay prefab de explosión asignado, crear uno básico con partículas
+        if (explosionEffectPrefab == null)
+        {
+            // Crear un sistema de partículas básico para la explosión
+            GameObject explosionObj = new GameObject("BlockExplosion");
+            explosionObj.transform.position = transform.position;
+            
+            // Añadir sistema de partículas
+            ParticleSystem ps = explosionObj.AddComponent<ParticleSystem>();
+            
+            // IMPORTANTE: Asegurarse de que el sistema no esté reproduciéndose
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            
+            // Configurar el sistema de partículas para una pequeña explosión
+            var main = ps.main;
+            main.startColor = new ParticleSystem.MinMaxGradient(Color.yellow, Color.red);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.1f, 0.3f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(3f, 5f);
+            main.maxParticles = 50;
+            main.duration = 0.5f;
+            main.loop = false;
+            
+            // Emisión de partículas
+            var emission = ps.emission;
+            emission.rateOverTime = 0;
+            emission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0f, 30, 40) });
+            
+            // Forma
+            var shape = ps.shape;
+            shape.shapeType = ParticleSystemShapeType.Sphere;
+            shape.radius = 0.1f;
+            
+            // Tiempo de vida
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.3f, 0.8f);
+            
+            // Crear y asignar material con el shader correcto
+            ParticleSystemRenderer renderer = ps.GetComponent<ParticleSystemRenderer>();
+            if (renderer != null)
+            {
+                // Crear un material nuevo para las partículas
+                Material particleMaterial = new Material(Shader.Find("Legacy Shaders/Particles/Additive"));
+                if (particleMaterial != null)
+                {
+                    renderer.material = particleMaterial;
+                }
+            }
+            
+            // Autodestrucción
+            Destroy(explosionObj, explosionLifetime);
+            
+            // Reproducir DESPUÉS de configurar todo
+            ps.Play();
+        }
+        else
+        {
+            // Instanciar el prefab de explosión
+            GameObject explosion = Instantiate(
+                explosionEffectPrefab, 
+                transform.position, 
+                Quaternion.identity
+            );
+            
+            // Asegurar que se destruya después de un tiempo
+            Destroy(explosion, explosionLifetime);
+        }
+        
+    }
 
     private void NotifyBlocksAbove()
     {
         // Origen del rayo: posición del bloque actual
         Vector3 rayOrigin = transform.position;
-        
+
         // Vector de tamaño de la caja para el BoxCast
         Vector3 boxSize = new Vector3(0.6f, 0.1f, 0.6f); // Caja delgada pero ancha
-        
+
         // Distancia para detectar solo bloques inmediatamente encima
         float rayDistance = 20f; // Lo suficientemente largo para detectar toda la columna
-        
+
         // Realizar un BoxCast hacia arriba para detectar bloques
         RaycastHit[] hits = Physics.BoxCastAll(
             rayOrigin,        // Origen
@@ -252,37 +329,37 @@ public class BlockController : MonoBehaviour
             Quaternion.identity, // Sin rotación
             rayDistance       // Distancia para toda la columna
         );
-        
+
         // Ordenar los hits por distancia (más cercanos primero)
         System.Array.Sort(hits, (hit1, hit2) => hit1.distance.CompareTo(hit2.distance));
-        
+
         // Variables para el algoritmo de propagación
         bool foundFirstBlock = false;
         float accumulatedDistance = 0f;
         BlockController previousBlock = null;
-        
+
         // Recorrer todos los hits ordenados por distancia
         foreach (RaycastHit hit in hits)
         {
             BlockController blockAbove = hit.collider.GetComponent<BlockController>();
-            
+
             // Ignorar objetos que no son bloques o el propio bloque
             if (blockAbove == null || blockAbove == this)
                 continue;
-            
+
             // Calculamos la distancia entre bloques
             float distance;
-            
+
             if (!foundFirstBlock)
             {
                 // Para el primer bloque, la distancia es relativa al bloque que se rompe
                 distance = hit.distance;
                 foundFirstBlock = true;
                 accumulatedDistance = distance;
-                
+
                 // El primer bloque desciende exactamente su coordenada Y para acabar en el nivel 0
                 float descendUnits = blockAbove.transform.position.y - pivotOffset;
-                
+
                 Debug.Log($"Primer bloque en {blockAbove.transform.position} descenderá hasta el nivel 0 ({descendUnits} unidades)");
                 blockAbove.DescendExactAmount(descendUnits);
             }
@@ -291,13 +368,13 @@ public class BlockController : MonoBehaviour
                 // Para los siguientes bloques, calculamos la distancia respecto al bloque anterior
                 distance = hit.distance - accumulatedDistance;
                 accumulatedDistance = hit.distance;
-                
+
                 // Este bloque desciende lo mismo que el anterior + (distancia - 1 unidad)
                 float additionalUnits = Mathf.Max(0f, Mathf.Floor(distance) - 1f);
                 float descendUnits = previousBlock.GetDescendUnits() + additionalUnits;
                 blockAbove.DescendExactAmount(descendUnits);
             }
-            
+
             previousBlock = blockAbove;
         }
     }
