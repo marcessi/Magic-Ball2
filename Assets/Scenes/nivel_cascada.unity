@@ -3006,7 +3006,7 @@ MonoBehaviour:
   minScaleFactor: 0.5
   leftShootPoint: {fileID: 0}
   rightShootPoint: {fileID: 0}
-  bulletPrefab: {fileID: 0}
+  bulletPrefab: {fileID: 2989000923634411228, guid: 44cdcd55c8562cc46b31e272eb09fc5b, type: 3}
   shootInterval: 0.5
 --- !u!136 &199205564
 CapsuleCollider:

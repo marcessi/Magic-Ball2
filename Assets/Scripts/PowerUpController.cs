@@ -66,6 +66,7 @@ public class PowerupController : MonoBehaviour
         {
             // Buscar el prefab de bala
             GameObject bulletPrefab = Resources.Load<GameObject>("Prefabs/Bullet");
+            Debug.Log("¿Prefab de bala cargado correctamente? " + (bulletPrefab != null ? "SÍ" : "NO"));
             
             // Buscar la paleta para asignarle el prefab
             PalletController paddle = FindObjectOfType<PalletController>();
@@ -187,9 +188,23 @@ public class PowerupController : MonoBehaviour
                 Debug.Log("PowerUp aplicado: Slow Down - Velocidad de la bola reducida");
                 break;
             case PowerupType.Shoot:
-                // Activar modo de disparo durante 20 segundos
-                paddle.ActivateShootMode(20f);
-                Debug.Log("PowerUp aplicado: Shoot - Disparando balas durante 20 segundos");
+                // Cargar el prefab de bala directamente aquí para asegurarnos
+                GameObject bulletPrefab = Resources.Load<GameObject>("Prefabs/Bullet");
+                
+                if (bulletPrefab != null)
+                {
+                    // Asignación directa si el campo es público
+                    // O usar SetBulletPrefab si existe un método público
+                    paddle.SetBulletPrefab(bulletPrefab);
+                    
+                    // Activar modo de disparo durante 20 segundos
+                    paddle.ActivateShootMode(20f);
+                    Debug.Log("PowerUp aplicado: Shoot - Disparando balas durante 20 segundos");
+                }
+                else
+                {
+                    Debug.LogError("No se pudo cargar el prefab de bala. Verifica que existe en Resources/Prefabs/Bullet");
+                }
                 break;
         }
     }

@@ -186,6 +186,20 @@ public class PalletController : MonoBehaviour
             BallController ball = collision.gameObject.GetComponent<BallController>();
             if (ball == null || ball.isAttachedToPaddle) return;
             
+            if (magnetModeActive && !magnetEffectUsed && !ball.isAttachedToPaddle)
+                {
+                    // Calcular posición de enganche (en la parte superior de la paleta)
+                    Vector3 attachPosition = transform.position + new Vector3(0, 0.5f, 0);
+                    
+                    // Llamar al método AttachToPaddle de la bola
+                    ball.AttachToPaddle(this.transform, this);
+                    
+                    // Marcar el efecto como usado
+                    magnetEffectUsed = true;
+                    
+                    Debug.Log("¡Bola pegada a la paleta por efecto imán!");
+                    return; // Salir para evitar el resto de la lógica de colisión
+                }
             // Obtener el punto de contacto
             ContactPoint contact = collision.contacts[0];
             
@@ -257,9 +271,12 @@ public class PalletController : MonoBehaviour
     // Corrutina para disparar balas
     private System.Collections.IEnumerator ShootBullets()
     {
+        Debug.Log("Corrutina de disparo iniciada");
+        
         // Crear puntos de disparo si no existen
         if (leftShootPoint == null)
         {
+            Debug.Log("Creando punto de disparo izquierdo");
             leftShootPoint = new GameObject("LeftShootPoint").transform;
             leftShootPoint.SetParent(transform);
             // Posición ajustada para una pala que se mueve en el eje Z
@@ -269,9 +286,9 @@ public class PalletController : MonoBehaviour
         
         if (rightShootPoint == null)
         {
+            Debug.Log("Creando punto de disparo derecho");
             rightShootPoint = new GameObject("RightShootPoint").transform;
             rightShootPoint.SetParent(transform);
-            // Posición ajustada para una pala que se mueve en el eje Z
             rightShootPoint.localPosition = new Vector3(0.4f, 0.3f, transform.localScale.z/2 - 0.2f);
             rightShootPoint.localRotation = Quaternion.Euler(90, 0, 0); // Rotación para que dispare hacia arriba (Y+)
         }
@@ -279,38 +296,57 @@ public class PalletController : MonoBehaviour
         // Mientras el modo esté activo, disparar a intervalos
         while (shootModeActive)
         {
-            // Disparar desde ambos puntos
-            if (bulletPrefab != null)
+            // Verificar que tenemos el prefab y los puntos de disparo
+            if (bulletPrefab != null && leftShootPoint != null && rightShootPoint != null)
             {
-                // Disparo izquierdo - usar la rotación correcta para que vaya hacia arriba (Y+)
+                Debug.Log("Disparando balas");
+                
+                // Disparo izquierdo
                 GameObject leftBullet = Instantiate(
                     bulletPrefab, 
                     leftShootPoint.position, 
-                    Quaternion.Euler(90, 0, 0) // Rotación para que dispare hacia arriba (Y+)
+                    Quaternion.identity // Usar identidad para que no haya rotación inicial
                 );
                 
-                // Disparo derecho - usar la rotación correcta para que vaya hacia arriba (Y+)
+                // Disparo derecho
                 GameObject rightBullet = Instantiate(
                     bulletPrefab, 
                     rightShootPoint.position, 
-                    Quaternion.Euler(90, 0, 0) // Rotación para que dispare hacia arriba (Y+)
+                    Quaternion.identity // Usar identidad para que no haya rotación inicial
                 );
                 
-                // Sonido de disparo (opcional)
-                AudioSource audioSource = GetComponent<AudioSource>();
-                if (audioSource != null)
+                // Verificar que se crearon las balas
+                if (leftBullet == null || rightBullet == null)
+                    Debug.LogError("Error al crear las balas");
+                else
+                    Debug.Log("Balas creadas correctamente");
+                
+                // Añadir velocidad a las balas si no tienen el controlador
+                if (leftBullet.GetComponent<BulletController>() == null)
                 {
-                    audioSource.Play();
+                    Rigidbody rb = leftBullet.GetComponent<Rigidbody>();
+                    if (rb != null) rb.linearVelocity = Vector3.up * 10f;
+                }
+                
+                if (rightBullet.GetComponent<BulletController>() == null)
+                {
+                    Rigidbody rb = rightBullet.GetComponent<Rigidbody>();
+                    if (rb != null) rb.linearVelocity = Vector3.up * 10f;
                 }
             }
             else
             {
-                Debug.LogWarning("Prefab de bala no asignado en PalletController");
+                Debug.LogError("Falta prefab de bala o puntos de disparo: " +
+                          "bulletPrefab=" + (bulletPrefab != null) +
+                          ", leftShootPoint=" + (leftShootPoint != null) +
+                          ", rightShootPoint=" + (rightShootPoint != null));
             }
             
             // Esperar el intervalo entre disparos
             yield return new WaitForSeconds(shootInterval);
         }
+        
+        Debug.Log("Corrutina de disparo finalizada");
     }
 
     // Método para desactivar el modo de disparo después de un tiempo
@@ -332,5 +368,12 @@ public class PalletController : MonoBehaviour
         }
         
         Debug.Log("Modo disparo desactivado en la paleta");
+    }
+
+    // Añade este método en PalletController.cs
+    public void SetBulletPrefab(GameObject prefab)
+    {
+        bulletPrefab = prefab;
+        Debug.Log("Prefab de bala asignado correctamente: " + prefab.name);
     }
 }

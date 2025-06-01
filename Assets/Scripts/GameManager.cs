@@ -22,6 +22,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject victoryPanel; // Variable faltante
     [SerializeField] private GameObject pausePanel;   // Variable faltante
     private bool isPaused = false;                    // Variable faltante
+    private bool isChangingLevel = false;            // Nueva variable para controlar cambio de nivel
     
     private void Awake()
     {
@@ -59,6 +60,14 @@ public class GameManager : MonoBehaviour
         // Si es escena de menú principal (índice 0)
         if (currentLevel == 0)
         {
+            // Notificar al MenuController para actualizar el high score
+            MenuController menuController = FindObjectOfType<MenuController>();
+            if (menuController != null)
+            {
+                menuController.UpdateHighScoreDisplay();
+                Debug.Log("High Score actualizado por GameManager después de cargar el menú principal");
+            }
+            
             // Resetear estado del juego al volver al menú principal
             if (gameInProgress) 
             {
@@ -186,124 +195,72 @@ public class GameManager : MonoBehaviour
     // Método para mostrar victoria
     public void Victory()
     {
+        Debug.Log("¡VICTORIA! Preparando transición al siguiente nivel...");
+        
+        // Marcar que estamos en proceso de cambio de nivel
+        isChangingLevel = true;
+        
+        // PRIMERO: Asegurar que el tiempo esté corriendo
+        Time.timeScale = 1f;
+        
+        // Mostrar panel de victoria si existe
         if (victoryPanel != null)
         {
             victoryPanel.SetActive(true);
         }
         
-        // Continuar al siguiente nivel después de un tiempo
-        Invoke("GoToNextLevel", 3f);
+        // Usar corrutina en lugar de Invoke para mayor seguridad
+        StartCoroutine(GoToNextLevelWithDelay(2f));
     }
     
-    // Oculta todos los paneles de UI
-    private void HideAllPanels()
+    // Añadir este método para consulta
+    public bool IsChangingLevel()
     {
-        if (gameOverPanel != null) gameOverPanel.SetActive(false);
-        if (victoryPanel != null) victoryPanel.SetActive(false);
-        if (pausePanel != null) pausePanel.SetActive(false);
-    }
-
-    // Añade este método al GameManager
-    private void OnEnable()
-    {
-        SceneManager.sceneLoaded += OnSceneLoaded;
-    }
-
-    private void OnDisable()
-    {
-        SceneManager.sceneLoaded -= OnSceneLoaded;
-    }
-
-    private void FindUIReferences()
-    {
-        // Buscar el panel de GameOver
-        if (gameOverPanel == null)
-            gameOverPanel = GameObject.Find("GameOverPanel");
-        
-        // Buscar el texto de puntuación (puede estar en el HUD)
-        if (scoreText == null)
-        {
-            GameObject hud = GameObject.Find("HUD");
-            if (hud != null)
-            {
-                scoreText = hud.GetComponentInChildren<TMP_Text>();
-            }
-            
-            // Si no lo encontramos, buscar directamente
-            if (scoreText == null)
-            {
-                GameObject scoreObject = GameObject.Find("ScoreText");
-                if (scoreObject != null)
-                {
-                    scoreText = scoreObject.GetComponent<TMP_Text>();
-                }
-            }
-        }
-        
-        // Buscar el panel de victoria
-        if (victoryPanel == null)
-            victoryPanel = GameObject.Find("VictoryPanel");
-            
-        // Buscar el panel de pausa
-        if (pausePanel == null)
-            pausePanel = GameObject.Find("PausePanel");
-            
-        // Si estamos en una escena de nivel, asegurarnos que el GameOver esté listo
-        if (currentLevel > 0)
-        {
-            EnsureGameOverPanel();
-        }
-    }
-
-    private void ConfigureMenuController()
-    {
-        // Buscar MenuController en la escena
-        MenuController menuController = FindObjectOfType<MenuController>();
-        if (menuController != null)
-        {
-            // Si tenemos GameOver panel, asignarlo al MenuController
-            if (gameOverPanel != null)
-            {
-                menuController.gameOverMenu = gameOverPanel;
-                
-                // Asignar ScoreText del GameOver
-                TMP_Text scoreTextUI = gameOverPanel.GetComponentInChildren<TMP_Text>();
-                if (scoreTextUI != null)
-                    menuController.scoreText = scoreTextUI;
-                    
-                // Asignar nameInputPanel si existe
-                Transform nameInputPanelTrans = gameOverPanel.transform.Find("NameInputPanel");
-                if (nameInputPanelTrans != null)
-                {
-                    menuController.nameInputPanel = nameInputPanelTrans.gameObject;
-                    Debug.Log("NameInputPanel asignado automáticamente al MenuController");
-                    
-                    // Buscar el input field
-                    TMP_InputField inputField = nameInputPanelTrans.GetComponentInChildren<TMP_InputField>();
-                    if (inputField != null)
-                        menuController.playerNameInput = inputField;
-                }
-                
-                // Configurar los botones con el MenuController también
-                menuController.SetupGameOverButtons();
-            }
-        }
+        return isChangingLevel;
     }
     
-    // Método para ir al siguiente nivel con verificación
+    // Nuevo método para manejar el cambio de nivel con seguridad
+    private System.Collections.IEnumerator GoToNextLevelWithDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        
+        // Asegurar nuevamente que el tiempo está corriendo
+        Time.timeScale = 1f;
+        
+        // Llamar al método para cambiar de nivel
+        GoToNextLevel();
+    }
+    
+    // Corrige el método GoToNextLevel en GameManager.cs
     public void GoToNextLevel()
     {
+        // IMPORTANTE: Restaurar el tiempo normal
+        Time.timeScale = 1f;
+        
         try
         {
-            // Calcula el índice del siguiente nivel
-            int nextLevelIndex = currentLevel + 1;
+            // Forzar reinicio de contadores de bloques antes de cambiar de nivel
+            BlockController.ResetLevelCounters();
             
-            // Verifica si existe el siguiente nivel
+            // Obtener el índice de la escena ACTUAL
+            int currentIdx = SceneManager.GetActiveScene().buildIndex;
+            int nextLevelIndex = currentIdx + 1;
+            
+            Debug.Log($"Intentando cargar nivel {nextLevelIndex} desde nivel actual {currentIdx}");
+            
+            // Verificar si existe el siguiente nivel
             if (nextLevelIndex < SceneManager.sceneCountInBuildSettings)
             {
                 Debug.Log("Cargando siguiente nivel: " + nextLevelIndex);
-                SceneManager.LoadScene(nextLevelIndex);
+                
+                // Guardar el índice antes de cargar la nueva escena
                 currentLevel = nextLevelIndex;
+                
+                // IMPORTANTE: Asegurar que isChangingLevel es true antes de cargar la escena
+                isChangingLevel = true;
+                
+                // Cargar la siguiente escena
+                SceneManager.LoadScene(nextLevelIndex);
             }
             else
             {
@@ -317,6 +274,16 @@ public class GameManager : MonoBehaviour
             // Fallback: volver al menú principal
             GoToMainMenu();
         }
+        
+        // Restablecer la bandera de cambio de nivel después de un tiempo
+        Invoke("ResetChangingLevelFlag", 3f);
+    }
+    
+    // Nuevo método para resetear la bandera después de un tiempo
+    private void ResetChangingLevelFlag()
+    {
+        isChangingLevel = false;
+        Debug.Log("Bandera isChangingLevel restablecida a false");
     }
     
     // Método para reiniciar el nivel currentLevel
@@ -433,6 +400,78 @@ public class GameManager : MonoBehaviour
                     heartImages[i].enabled = true;
                 else
                     heartImages[i].enabled = false;
+            }
+        }
+    }
+
+    private void HideAllPanels()
+    {
+        // Ocultar todos los paneles de UI
+        if (gameOverPanel != null)
+            gameOverPanel.SetActive(false);
+            
+        if (victoryPanel != null)
+            victoryPanel.SetActive(false);
+            
+        if (pausePanel != null)
+            pausePanel.SetActive(false);
+            
+        Debug.Log("Todos los paneles ocultados");
+    }
+
+    private void FindUIReferences()
+    {
+        // Buscar referencias a elementos UI en la escena actual
+        if (scoreText == null)
+            scoreText = GameObject.Find("ScoreText")?.GetComponent<TMP_Text>();
+            
+        if (gameOverPanel == null)
+            gameOverPanel = GameObject.Find("GameOverPanel");
+            
+        if (victoryPanel == null)
+            victoryPanel = GameObject.Find("VictoryPanel");
+            
+        if (pausePanel == null)
+            pausePanel = GameObject.Find("PausePanel");
+            
+        // Asegurar que existe un panel de GameOver
+        EnsureGameOverPanel();
+        
+        Debug.Log("Referencias UI actualizadas");
+    }
+
+    private void ConfigureMenuController()
+    {
+        // Buscar MenuController en la escena
+        MenuController menuController = FindObjectOfType<MenuController>();
+        if (menuController != null)
+        {
+            // Si tenemos GameOver panel, asignarlo al MenuController
+            if (gameOverPanel != null)
+            {
+                menuController.gameOverMenu = gameOverPanel;
+                
+                // Asignar ScoreText del GameOver
+                TMP_Text scoreTextUI = gameOverPanel.GetComponentInChildren<TMP_Text>();
+                if (scoreTextUI != null)
+                    menuController.scoreText = scoreTextUI;
+                    
+                // Asignar nameInputPanel si existe
+                Transform nameInputPanelTrans = gameOverPanel.transform.Find("NameInputPanel");
+                if (nameInputPanelTrans != null)
+                {
+                    menuController.nameInputPanel = nameInputPanelTrans.gameObject;
+                    
+                    // Buscar el input field
+                    TMP_InputField inputField = nameInputPanelTrans.GetComponentInChildren<TMP_InputField>();
+                    if (inputField != null)
+                        menuController.playerNameInput = inputField;
+                }
+                
+                // Configurar los botones
+                menuController.SetupGameOverButtons();
+                
+                Debug.Log("MenuController configurado con éxito");
             }
         }
     }

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement; // Asegurarse de incluir esto para SceneManager
 
 public class BlockController : MonoBehaviour
 {
@@ -19,6 +20,9 @@ public class BlockController : MonoBehaviour
     private static int totalBlocksInitial = 0;
     private static int blocksDestroyed = 0;
     private static bool isInitialized = false;
+    
+    // Añadir una variable para identificar el nivel actual
+    private static int currentLevelId = -1;
     
     // Lista de tipos de powerups
     private enum PowerUpType 
@@ -60,13 +64,47 @@ public class BlockController : MonoBehaviour
     
     private void Awake()
     {
-        // Inicializar contador de bloques solo una vez por nivel
+        // Obtener el ID del nivel actual
+        int levelId = SceneManager.GetActiveScene().buildIndex;
+        
+        // Si cambiamos de nivel, forzar la reinicialización
+        if (levelId != currentLevelId)
+        {
+            isInitialized = false;
+            blocksDestroyed = 0; // Reiniciar el contador de bloques destruidos
+            totalBlocksInitial = 0; // Reiniciar el contador total
+            currentLevelId = levelId;
+            Debug.Log($"Cambiado a nivel {levelId} - Forzando reinicialización completa");
+        }
+        
+        // Inicializar contador de bloques solo una vez por nivel y por bloque
+        // Esperar un poco más para asegurar que todos los bloques estén cargados
+        Invoke("InitializeBlockCount", Random.Range(0.2f, 0.5f));
+    }
+    
+    // Nuevo método para inicializar el conteo de bloques después de una pequeña pausa
+    private void InitializeBlockCount()
+    {
         if (!isInitialized)
         {
-            totalBlocksInitial = FindObjectsOfType<BlockController>().Length;
+            // Esperar un poco más antes de contar para asegurar que todos los bloques estén cargados
+            // Contar bloques después de que todos se hayan instanciado - CONTAR SOLO LOS ACTIVOS
+            BlockController[] blocks = FindObjectsOfType<BlockController>();
+            
+            // Filtrar solo los bloques activos
+            int activeBlocks = 0;
+            foreach (BlockController block in blocks)
+            {
+                if (block.gameObject.activeInHierarchy && block != this)
+                    activeBlocks++;
+            }
+            
+            // Sumar 1 para incluir este bloque
+            totalBlocksInitial = activeBlocks + 1;
             blocksDestroyed = 0;
             isInitialized = true;
-            Debug.Log($"Nivel inicializado con {totalBlocksInitial} bloques");
+            
+            Debug.Log($"Nivel inicializado con {totalBlocksInitial} bloques en escena {currentLevelId}");
         }
     }
     
@@ -142,6 +180,9 @@ public class BlockController : MonoBehaviour
             GameManager.Instance.AddPoints(10); // 10 puntos por bloque
         }
 
+        // Verificar si todos los bloques han sido destruidos
+        CheckAllBlocksDestroyed();
+
         // Iniciar la animación de destrucción
         StartCoroutine(BreakAnimation());
     }
@@ -186,6 +227,9 @@ public class BlockController : MonoBehaviour
         
         // Destroy the block
         Destroy(gameObject);
+
+        // Comprobar si todos los bloques han sido destruidos
+        CheckAllBlocksDestroyed();
     }
 
     private void NotifyBlocksAbove()
@@ -307,50 +351,34 @@ public class BlockController : MonoBehaviour
         }
     }
     
+    // Actualizar el método SelectPowerUpType para que NextLevel sea realmente raro
     private PowerUpType SelectPowerUpType()
     {
-        // Verificar si se puede generar el powerup NextLevel
-        bool canGenerateNextLevel = GetDestroyedPercentage() >= 95f;
+        // Verificar si se puede generar el powerup NextLevel - aumentar el umbral
+        bool canGenerateNextLevel = GetDestroyedPercentage() > 95f;
         
-        // Lista de tipos disponibles, excluyendo NextLevel si no se cumple la condición
+        // Lista de tipos disponibles
         List<PowerUpType> availableTypes = new List<PowerUpType>();
         
         foreach (PowerUpType type in System.Enum.GetValues(typeof(PowerUpType)))
         {
-            // Solo incluir NextLevel si se ha destruido más del 95% de los bloques
-            if (type != PowerUpType.NextLevel || canGenerateNextLevel)
+            // Excluir NextLevel si no se cumple la condición
+            if (type != PowerUpType.NextLevel)
             {
                 availableTypes.Add(type);
             }
         }
         
-        // Si NextLevel está disponible, darle menor probabilidad
+        // Si está disponible NextLevel, añadirlo pero con muy baja probabilidad
         if (canGenerateNextLevel)
         {
-            // Añadir tipos comunes múltiples veces para aumentar su probabilidad relativa
-            // NextLevel solo aparece una vez en la lista, los demás aparecen 3 veces
-            List<PowerUpType> weightedTypes = new List<PowerUpType>(availableTypes);
-            
-            foreach (PowerUpType type in availableTypes)
-            {
-                if (type != PowerUpType.NextLevel)
-                {
-                    // Añadir cada tipo común 2 veces más (total 3 apariciones)
-                    weightedTypes.Add(type);
-                    weightedTypes.Add(type);
-                }
-            }
-            
-            // Seleccionar aleatoriamente de la lista ponderada
-            int randomIndex = Random.Range(0, weightedTypes.Count);
-            return weightedTypes[randomIndex];
+            // Probabilidad baja: 1% de probabilidad de que sea NextLevel
+            availableTypes.Add(PowerUpType.NextLevel);
         }
-        else
-        {
-            // Seleccionar aleatoriamente entre los tipos disponibles (sin NextLevel)
-            int randomIndex = Random.Range(0, availableTypes.Count);
-            return availableTypes[randomIndex];
-        }
+        
+        // Seleccionar aleatoriamente entre los tipos normales
+        int randomIndex = Random.Range(0, availableTypes.Count);
+        return availableTypes[randomIndex];
     }
 
     public void StartDescending()
@@ -366,11 +394,13 @@ public class BlockController : MonoBehaviour
         return (float)blocksDestroyed / totalBlocksInitial * 100f;
     }
 
+    // Método explícito para reiniciar contadores (llamado desde GameManager)
     public static void ResetLevelCounters()
     {
         totalBlocksInitial = 0;
         blocksDestroyed = 0;
         isInitialized = false;
+        Debug.Log("Contadores de bloques reiniciados explícitamente");
     }
 
         public bool IsDescending()
@@ -386,5 +416,44 @@ public class BlockController : MonoBehaviour
     public float GetDescendUnits()
     {
         return descendUnits;
+    }
+
+    // Mejorar el método CheckAllBlocksDestroyed para ser más robusto
+    private static void CheckAllBlocksDestroyed()
+    {
+        // Verificar que hay bloques para contar
+        if (totalBlocksInitial <= 0)
+        {
+            Debug.LogWarning("No hay bloques inicializados para comprobar");
+            return;
+        }
+        
+        // Contar los bloques actuales en la escena (solo los activos)
+        BlockController[] blocks = FindObjectsOfType<BlockController>();
+        int activeBlocks = 0;
+        foreach (BlockController block in blocks)
+        {
+            if (block.gameObject.activeInHierarchy && !block.isBreaking)
+                activeBlocks++;
+        }
+        
+        Debug.Log($"CheckAllBlocksDestroyed: Bloques activos={activeBlocks}, Destruidos={blocksDestroyed}, Total={totalBlocksInitial}");
+        
+        // Si se han destruido todos los bloques (usando la cuenta actual de bloques activos)
+        if (activeBlocks <= 0 || blocksDestroyed >= totalBlocksInitial)
+        {
+            Debug.Log($"¡TODOS LOS BLOQUES DESTRUIDOS! ({blocksDestroyed}/{totalBlocksInitial}) - Bloques restantes: {activeBlocks}");
+            
+            // COMPROBAR si ya estamos cambiando de nivel para evitar llamadas múltiples
+            if (GameManager.Instance != null && !GameManager.Instance.IsChangingLevel())
+            {
+                Debug.Log("Llamando a Victory() después de verificar IsChangingLevel=false");
+                GameManager.Instance.Invoke("Victory", 1.5f);
+            }
+            else
+            {
+                Debug.Log("NO se llama a Victory - Ya estamos cambiando de nivel o GameManager es null");
+            }
+        }
     }
 }

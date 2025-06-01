@@ -89,31 +89,45 @@ public class MenuController : MonoBehaviour
     }
     
     // Actualizar el texto de mayor puntuación
-    private void UpdateHighScoreDisplay()
+    public void UpdateHighScoreDisplay()
     {
         if (highScoreText != null)
         {
             // Obtener el número de puntuaciones guardadas
             int scoreCount = PlayerPrefs.GetInt("ScoreCount", 0);
+            Debug.Log("Número total de puntuaciones guardadas: " + scoreCount);
             
             if (scoreCount > 0)
             {
                 // Buscar la puntuación más alta
-                string bestPlayerName = "";
+                string bestPlayerName = "Player";
                 int highestScore = 0;
+                int bestScoreIndex = -1;
                 
+                // Mostrar todas las puntuaciones guardadas para depuración
+                Debug.Log("Lista de todas las puntuaciones guardadas:");
                 for (int i = 0; i < scoreCount; i++)
                 {
                     string name = PlayerPrefs.GetString("ScoreName_" + i, "???");
                     int score = PlayerPrefs.GetInt("ScoreValue_" + i, 0);
+                    Debug.Log($"Puntuación {i}: {name} - {score}");
                     
                     if (score > highestScore)
                     {
                         highestScore = score;
                         bestPlayerName = name;
+                        bestScoreIndex = i;
                     }
                 }
                 
+                // Verificar si se encontró el mejor nombre
+                if (string.IsNullOrEmpty(bestPlayerName) || bestPlayerName == "???")
+                {
+                    bestPlayerName = "Player";
+                    Debug.LogWarning("Nombre del mejor jugador no encontrado, usando 'Player'");
+                }
+                
+                Debug.Log($"Mejor puntuación encontrada en índice {bestScoreIndex}: '{bestPlayerName}' - {highestScore}");
                 highScoreText.text = $"{bestPlayerName} - {highestScore} pts";
             }
             else
@@ -606,6 +620,45 @@ public class MenuController : MonoBehaviour
                 return found;
         }
         return null;
+    }
+
+    // Modifica el Update() en MenuController.cs (añádelo si no existe)
+    private void Update()
+    {
+        // Verifica si estamos en la escena del menú principal
+        if (isMainMenuScene)
+        {
+            // Verifica si hay una solicitud para actualizar el high score
+            if (PlayerPrefs.GetInt("UpdateHighScore", 0) == 1)
+            {
+                // Resetea la flag
+                PlayerPrefs.SetInt("UpdateHighScore", 0);
+                PlayerPrefs.Save();
+                
+                // NUEVO: Mostrar todas las puntuaciones guardadas
+                DumpAllScores();
+                
+                // Actualiza el display de high scores
+                UpdateHighScoreDisplay();
+                Debug.Log("High Score actualizado después de volver al menú principal");
+            }
+        }
+    }
+    
+    // NUEVO: Método para mostrar todas las puntuaciones guardadas
+    private void DumpAllScores()
+    {
+        int scoreCount = PlayerPrefs.GetInt("ScoreCount", 0);
+        Debug.Log("===== TODAS LAS PUNTUACIONES GUARDADAS =====");
+        
+        for (int i = 0; i < scoreCount; i++)
+        {
+            string name = PlayerPrefs.GetString("ScoreName_" + i, "???");
+            int score = PlayerPrefs.GetInt("ScoreValue_" + i, 0);
+            Debug.Log($"[{i}] {name}: {score} puntos");
+        }
+        
+        Debug.Log("===========================================");
     }
 }
 
