@@ -50,7 +50,9 @@ MonoBehaviour:
   descendSpeed: 2
   breakEffect: {fileID: 0}
   breakAnimationDuration: 0.3
+  pivotOffset: 0
   enablePowerUps: 1
+  powerUpChance: 0.3
 --- !u!65 &5677803399345815070
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -66,7 +68,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3

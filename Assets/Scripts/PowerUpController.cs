@@ -258,8 +258,22 @@ public class PowerupController : MonoBehaviour
                 isPowerBall = (bool)powerBallField.GetValue(referenceBall);
             }
             
-            // Ángulos predefinidos para las direcciones de las bolas (más separados)
-            float[] angles = { 60f, 120f }; // Una a 60° (hacia arriba-derecha) y otra a 120° (hacia arriba-izquierda)
+            // Obtener la dirección actual de la bola de referencia
+            Rigidbody refRb = referenceBall.GetComponent<Rigidbody>();
+            Vector3 currentDirection = Vector3.zero;
+            
+            if (refRb != null && refRb.linearVelocity.magnitude > 0)
+            {
+                currentDirection = refRb.linearVelocity.normalized;
+            }
+            else
+            {
+                // Si no hay velocidad, usar dirección por defecto hacia arriba
+                currentDirection = new Vector3(0, 0, 1);
+            }
+            
+            // Ángulos de desviación para las nuevas bolas
+            float[] deviationAngles = { -30f, 30f }; // 30 grados a la izquierda y derecha
             
             // Crea dos bolas nuevas mediante clonación
             for (int i = 0; i < 2; i++)
@@ -277,7 +291,6 @@ public class PowerupController : MonoBehaviour
                 BallController ballController = newBall.GetComponent<BallController>();
                 if (ballController != null)
                 {
-                    
                     // Aplicar el mismo efecto de PowerBall si estaba activo
                     if (isPowerBall)
                     {
@@ -287,12 +300,12 @@ public class PowerupController : MonoBehaviour
                     // Limpiar cualquier transformación padre o asociación a la paleta
                     ballController.transform.SetParent(null);
                     
-                    // Lanzar la bola con un ángulo predefinido
-                    StartCoroutine(LaunchBallDelayed(ballController, angles[i]));
+                    // Lanzar la bola con la dirección modificada de la bola original
+                    StartCoroutine(LaunchBallWithModifiedDirection(ballController, currentDirection, deviationAngles[i]));
                 }
             }
             
-            Debug.Log("Se crearon 2 bolas nuevas con los mismos efectos que la original");
+            Debug.Log("Se crearon 2 bolas nuevas con dirección similar a la original pero desviadas");
         }
         else
         {
@@ -300,21 +313,23 @@ public class PowerupController : MonoBehaviour
         }
     }
 
-    // Modificado para aceptar un ángulo específico
-    private IEnumerator LaunchBallDelayed(BallController ball, float angle)
+    // Nuevo método para lanzar la bola con una dirección modificada
+    private IEnumerator LaunchBallWithModifiedDirection(BallController ball, Vector3 originalDirection, float deviationAngle)
     {
         // Esperar un frame para que Unity termine la inicialización
         yield return null;
         
-        // Convertir ángulo a radianes
-        float radians = angle * Mathf.Deg2Rad;
+        // Rotar la dirección original según el ángulo de desviación
+        // La rotación se aplica alrededor del eje Y para desviar hacia izquierda o derecha
+        Vector3 newDirection = Quaternion.Euler(0, deviationAngle, 0) * originalDirection;
         
-        // Convertir ángulo a dirección (x,z)
-        Vector3 direction = new Vector3(Mathf.Cos(radians), 0, Mathf.Sin(radians)).normalized;
+        // Normalizar para asegurar que la magnitud es 1
+        newDirection.Normalize();
         
-        ball.LaunchBall(direction);
+        // Lanzar la bola con la dirección modificada
+        ball.LaunchBall(newDirection);
         
-        Debug.Log($"Bola nueva lanzada con dirección {direction} (ángulo: {angle}°)");
+        Debug.Log($"Bola nueva lanzada con dirección desviada {newDirection} (ángulo de desviación: {deviationAngle}°)");
     }
     
     // Activa el modo imán en la paleta

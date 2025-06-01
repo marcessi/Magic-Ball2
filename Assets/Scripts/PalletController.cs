@@ -7,6 +7,9 @@ public class PalletController : MonoBehaviour
     private float velocidad = 15f;
     [SerializeField] private float limiteIzquierdo = -6f;
     [SerializeField] private float limiteDerecho = 7f;
+    // Original limits to be preserved
+    private float originalLimiteIzquierdo;
+    private float originalLimiteDerecho;
 
     [Header("Scale Settings")]
     [SerializeField] private float maxScaleFactor = 2.0f; // Escala máxima respecto a la original
@@ -31,6 +34,10 @@ public class PalletController : MonoBehaviour
         // Store initial position and scale
         initialPosition = transform.position;
         originalScale = transform.localScale;
+        
+        // Store original movement limits
+        originalLimiteIzquierdo = limiteIzquierdo;
+        originalLimiteDerecho = limiteDerecho;
     }
     
     private void Update()
@@ -130,11 +137,17 @@ public class PalletController : MonoBehaviour
             // Interpolar entre la escala actual y la objetivo
             transform.localScale = Vector3.Lerp(startScale, targetScale, t);
             
+            // Adjust movement limits based on the current scale
+            AdjustMovementLimits();
+            
             yield return null;
         }
         
         // Asegurar que llegamos exactamente al valor deseado
         transform.localScale = targetScale;
+        
+        // Final adjustment of movement limits
+        AdjustMovementLimits();
         
         Debug.Log($"Escala de la paleta ajustada. Factor actual: {transform.localScale.z / originalScale.z:F2}x");
     }
@@ -243,7 +256,12 @@ public class PalletController : MonoBehaviour
     {
         // Restaurar escala original inmediatamente, sin animación
         transform.localScale = originalScale;
-        Debug.Log("Paleta restaurada a su escala original");
+        
+        // Reset movement limits
+        limiteIzquierdo = originalLimiteIzquierdo;
+        limiteDerecho = originalLimiteDerecho;
+        
+        Debug.Log("Paleta restaurada a su escala original y límites de movimiento ajustados");
     }
 
     // Método para activar el modo de disparo
@@ -370,10 +388,35 @@ public class PalletController : MonoBehaviour
         Debug.Log("Modo disparo desactivado en la paleta");
     }
 
-    // Añade este método en PalletController.cs
+    // Añades este método en PalletController.cs
     public void SetBulletPrefab(GameObject prefab)
     {
         bulletPrefab = prefab;
         Debug.Log("Prefab de bala asignado correctamente: " + prefab.name);
+    }
+
+    private void AdjustMovementLimits()
+    {
+        // Calculate the scale ratio compared to the original
+        float scaleRatio = transform.localScale.z / originalScale.z;
+        
+        // Calculate the difference between current and original half-width
+        float originalHalfWidth = originalScale.z * 0.5f;
+        float currentHalfWidth = transform.localScale.z * 0.5f;
+        float widthDifference = currentHalfWidth - originalHalfWidth;
+        
+        // Adjust limits based on whether the paddle has grown or shrunk
+        if (widthDifference >= 0) {
+            // Paddle has grown or stayed the same - restrict movement range
+            limiteIzquierdo = originalLimiteIzquierdo + widthDifference;
+            limiteDerecho = originalLimiteDerecho - widthDifference;
+        } else {
+            // Paddle has shrunk - expand movement range
+            // When the paddle is smaller, it needs more movement range to reach the edges
+            limiteIzquierdo = originalLimiteIzquierdo + widthDifference;
+            limiteDerecho = originalLimiteDerecho - widthDifference;
+        }
+        
+        Debug.Log($"Movement limits adjusted: Left={limiteIzquierdo:F2}, Right={limiteDerecho:F2}, Scale ratio={scaleRatio:F2}");
     }
 }

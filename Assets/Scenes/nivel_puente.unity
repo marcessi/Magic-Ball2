@@ -20074,6 +20074,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 873414477}
     m_Modifications:
+    - target: {fileID: 1770526314404440827, guid: 40ed6ccae6f9d56478e8ffe44026b45d, type: 3}
+      propertyPath: m_Color.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1770526314404440827, guid: 40ed6ccae6f9d56478e8ffe44026b45d, type: 3}
+      propertyPath: m_Color.r
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4855357927180404413, guid: 40ed6ccae6f9d56478e8ffe44026b45d, type: 3}
       propertyPath: m_Enabled
       value: 0
