@@ -12,20 +12,20 @@ EditorBuildSettings:
     path: Assets/Scenes/Menu 3D.unity
     guid: fcad57b4836b37841ae0c2a86f48ad25
   - enabled: 1
-    path: Assets/Scenes/nivel_cascada.unity
-    guid: 89680f77bae7ad24ebbd2a8532ece7c0
+    path: Assets/Scenes/nivel_puente.unity
+    guid: 1f6a76a5022fee24f97cb7265b0dc7e1
   - enabled: 1
     path: Assets/Scenes/nivel_iglu.unity
     guid: 492247f8f4f39984ab52caf326208432
   - enabled: 1
-    path: Assets/Scenes/nivel_piramide.unity
-    guid: 1195e2de2976666428143256ce51d2cb
-  - enabled: 1
-    path: Assets/Scenes/nivel_puente.unity
-    guid: 1f6a76a5022fee24f97cb7265b0dc7e1
+    path: Assets/Scenes/nivel_cascada.unity
+    guid: 89680f77bae7ad24ebbd2a8532ece7c0
   - enabled: 1
     path: Assets/Scenes/nivel_volcano.unity
     guid: 061e7a42cf148f147991921be2449a36
+  - enabled: 1
+    path: Assets/Scenes/nivel_piramide.unity
+    guid: 1195e2de2976666428143256ce51d2cb
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 289c1b55c9541489481df5cc06664110, type: 3}
   m_UseUCBPForAssetBundles: 0
