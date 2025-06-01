@@ -13,8 +13,8 @@ public class BlockController : MonoBehaviour
     [SerializeField] private float pivotOffset = 0f; // Offset for blocks with displaced pivot
     
     [Header("PowerUp Settings")]
-    [SerializeField] private bool enablePowerUps = true;
-    [SerializeField, Range(0f, 1f)] private float powerUpChance = 0.3f;
+    private bool enablePowerUps = true;
+    private float powerUpChance = 0.3f;
     
     // Variables para el seguimiento de bloques
     private static int totalBlocksInitial = 0;
@@ -183,9 +183,6 @@ public class BlockController : MonoBehaviour
         {
             GameManager.Instance.AddPoints(10); // 10 puntos por bloque
         }
-
-        // Verificar si todos los bloques han sido destruidos
-        CheckAllBlocksDestroyed();
 
         // Iniciar la animación de destrucción
         StartCoroutine(BreakAnimation());

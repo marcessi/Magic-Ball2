@@ -57,13 +57,19 @@ public class GameManager : MonoBehaviour
             {
                 musicSource = gameObject.AddComponent<AudioSource>();
                 musicSource.loop = true;
-                musicSource.volume = 0.4f; // Inicializar con volumen para menú principal
+                musicSource.volume = 0.3f; // Inicializar con volumen para menú principal
             }
         }
         else
         {
             Destroy(gameObject);
         }
+    }
+
+    // Añadir este método para consulta
+    public bool IsChangingLevel()
+    {
+        return isChangingLevel;
     }
     
     // Nueva función para inicializar variables
@@ -231,39 +237,15 @@ public class GameManager : MonoBehaviour
     // Método para mostrar victoria
     public void Victory()
     {
-        Debug.Log("¡VICTORIA! Preparando transición al siguiente nivel...");
+        Debug.Log("¡VICTORIA! Cambiando inmediatamente al siguiente nivel...");
         
         // Marcar que estamos en proceso de cambio de nivel
         isChangingLevel = true;
         
-        // PRIMERO: Asegurar que el tiempo esté corriendo
+        // Asegurar que el tiempo está corriendo
         Time.timeScale = 1f;
         
-        // Mostrar panel de victoria si existe
-        if (victoryPanel != null)
-        {
-            victoryPanel.SetActive(true);
-        }
-        
-        // Usar corrutina en lugar de Invoke para mayor seguridad
-        StartCoroutine(GoToNextLevelWithDelay(2f));
-    }
-    
-    // Añadir este método para consulta
-    public bool IsChangingLevel()
-    {
-        return isChangingLevel;
-    }
-    
-    // Nuevo método para manejar el cambio de nivel con seguridad
-    private System.Collections.IEnumerator GoToNextLevelWithDelay(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        
-        // Asegurar nuevamente que el tiempo está corriendo
-        Time.timeScale = 1f;
-        
-        // Llamar al método para cambiar de nivel
+        // Cargar siguiente nivel directamente sin espera
         GoToNextLevel();
     }
     
@@ -295,7 +277,7 @@ public class GameManager : MonoBehaviour
                 // IMPORTANTE: Asegurar que isChangingLevel es true antes de cargar la escena
                 isChangingLevel = true;
                 
-                // Cargar la siguiente escena
+                // Cargar la siguiente escena inmediatamente
                 SceneManager.LoadScene(nextLevelIndex);
             }
             else
@@ -566,7 +548,7 @@ public class GameManager : MonoBehaviour
             if (levelMusic != null)
             {
                 musicSource.clip = levelMusic;
-                musicSource.volume = 0.25f; // Establecer volumen a 0.25 para música de niveles
+                musicSource.volume = 0.15f; // Establecer volumen a 0.15 para música de niveles
                 musicSource.Play();
                 Debug.Log($"Reproduciendo música: {levelMusicTracks[musicIndex]} con volumen: 0.25");
             }
@@ -656,6 +638,77 @@ public class GameManager : MonoBehaviour
         else
         {
             Debug.LogWarning($"No se pudo cargar el sonido de game over: {gameOverAudioTrack}");
+        }
+    }
+
+    private void Update()
+    {
+        // Level shortcuts with number keys (1-5) only work during active gameplay
+        if (gameInProgress && !isPaused && Time.timeScale > 0)
+        {
+            // Make sure we're not in game over or victory state
+            if (gameOverPanel == null || !gameOverPanel.activeSelf)
+            {
+                if (victoryPanel == null || !victoryPanel.activeSelf)
+                {
+                    if (Input.GetKeyDown(KeyCode.Alpha1))
+                    {
+                        PlayLevel(1);
+                    }
+                    else if (Input.GetKeyDown(KeyCode.Alpha2))
+                    {
+                        PlayLevel(2);
+                    }
+                    else if (Input.GetKeyDown(KeyCode.Alpha3))
+                    {
+                        PlayLevel(3);
+                    }
+                    else if (Input.GetKeyDown(KeyCode.Alpha4))
+                    {
+                        PlayLevel(4);
+                    }
+                    else if (Input.GetKeyDown(KeyCode.Alpha5))
+                    {
+                        PlayLevel(5);
+                    }
+                }
+            }
+        }
+    }
+    
+    // Method to directly jump to a specific level
+    public void PlayLevel(int levelIndex)
+    {
+        // Make sure we can only switch levels during active gameplay
+        if (!gameInProgress || isPaused || Time.timeScale <= 0)
+        {
+            Debug.Log("Cannot switch levels while game is paused or in menu/victory/defeat screens");
+            return;
+        }
+        
+        // Make sure the level exists in build settings
+        if (levelIndex >= 1 && levelIndex < SceneManager.sceneCountInBuildSettings)
+        {
+            Debug.Log($"Loading level {levelIndex} directly via keyboard shortcut");
+            
+            // Reset block counters before loading
+            BlockController.ResetLevelCounters();
+            
+            // Update the current level
+            currentLevel = levelIndex;
+            
+            // Set flag for level change
+            isChangingLevel = true;
+            
+            // Make sure time scale is normal
+            Time.timeScale = 1f;
+            
+            // Load the selected level
+            SceneManager.LoadScene(levelIndex);
+        }
+        else
+        {
+            Debug.LogWarning($"Level {levelIndex} is not in build settings");
         }
     }
 }
