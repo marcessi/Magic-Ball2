@@ -37,6 +37,9 @@ public class PowerupController : MonoBehaviour
     {
         transform.localScale *= powerupScale;
         
+        // Registrar este power up en el contador global
+        BlockController.IncrementActivePowerUps();
+        
         if (GetComponent<Collider>() == null)
         {
             gameObject.AddComponent<BoxCollider>();
@@ -81,7 +84,7 @@ public class PowerupController : MonoBehaviour
             }
         }
         
-        Debug.Log("PowerUp inicializado: " + gameObject.name + " - Tipo: " + powerupType);
+        Debug.Log($"PowerUp inicializado: {gameObject.name} - Tipo: {powerupType} (Total activos: {BlockController.GetActivePowerUps()})");
     }
 
     private void Update()
@@ -90,6 +93,13 @@ public class PowerupController : MonoBehaviour
         transform.Rotate(Vector3.up * rotationSpeed * Time.deltaTime);
     }
     
+    private void OnDestroy()
+    {
+        // Decrementar el contador al ser destruido
+        BlockController.DecrementActivePowerUps();
+        Debug.Log($"PowerUp destruido: {powerupType} (Total activos restantes: {BlockController.GetActivePowerUps()})");
+    }
+
     private void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.CompareTag("Paddle"))
@@ -99,6 +109,8 @@ public class PowerupController : MonoBehaviour
             {
                 ApplyPowerupEffect(paddle);
             }
+            
+            // NO necesitamos llamar a DecrementActivePowerUps aquí porque OnDestroy() lo hará
             Destroy(gameObject);
         }
     }

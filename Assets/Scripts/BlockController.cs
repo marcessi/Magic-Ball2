@@ -62,6 +62,10 @@ public class BlockController : MonoBehaviour
     private Vector3 targetPosition;
     private float descendUnits = 0f;
     
+    // Agregar contador estático para los power ups activos
+    private static int activePowerUps = 0;
+    private static int maxPowerUps = 10;
+
     private void Awake()
     {
         // Obtener el ID del nivel actual
@@ -326,6 +330,13 @@ public class BlockController : MonoBehaviour
     
     private void SpawnRandomPowerUp()
     {
+        // Verificar si ya alcanzamos el límite de power ups activos
+        if (activePowerUps >= maxPowerUps)
+        {
+            Debug.Log($"Límite de power ups alcanzado ({activePowerUps}/{maxPowerUps}). No se generará nuevo power up.");
+            return;
+        }
+        
         // Elegir un tipo de powerup basado en probabilidades
         PowerUpType selectedType = SelectPowerUpType();
         
@@ -343,14 +354,14 @@ public class BlockController : MonoBehaviour
                 Quaternion.identity
             );
             
-            Debug.Log("PowerUp generado: " + prefabName);
+            Debug.Log($"PowerUp generado: {prefabName}");
         }
         else
         {
             Debug.LogWarning("No se pudo cargar el prefab: Resources/Prefabs/" + prefabName);
         }
     }
-    
+
     // Actualizar el método SelectPowerUpType para que NextLevel sea realmente raro
     private PowerUpType SelectPowerUpType()
     {
@@ -400,7 +411,8 @@ public class BlockController : MonoBehaviour
         totalBlocksInitial = 0;
         blocksDestroyed = 0;
         isInitialized = false;
-        Debug.Log("Contadores de bloques reiniciados explícitamente");
+        activePowerUps = 0; // Resetear el contador de power ups
+        Debug.Log("Contadores de bloques y power ups reiniciados explícitamente");
     }
 
         public bool IsDescending()
@@ -455,5 +467,29 @@ public class BlockController : MonoBehaviour
                 Debug.Log("NO se llama a Victory - Ya estamos cambiando de nivel o GameManager es null");
             }
         }
+    }
+
+    // Método para decrementar el contador de power ups (usado por PowerupDestroyTracker)
+    public static bool DecrementActivePowerUps()
+    {
+        if (activePowerUps > 0)
+        {
+            activePowerUps--;
+            return true;
+        }
+        return false;
+    }
+
+    // Método para obtener el número actual de power ups
+    public static int GetActivePowerUps()
+    {
+        return activePowerUps;
+    }
+
+    // Método para incrementar el contador de power ups (usado por PowerupController)
+    public static void IncrementActivePowerUps()
+    {
+        activePowerUps++;
+        Debug.Log($"Power up registrado. Total activos: {activePowerUps}/{maxPowerUps}");
     }
 }

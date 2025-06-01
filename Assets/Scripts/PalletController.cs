@@ -5,15 +5,17 @@ using System.Collections;
 public class PalletController : MonoBehaviour
 {
     private float velocidad = 15f;
-    [SerializeField] private float limiteIzquierdo = -6f;
-    [SerializeField] private float limiteDerecho = 7f;
-    // Original limits to be preserved
-    private float originalLimiteIzquierdo;
-    private float originalLimiteDerecho;
+    private float limiteIzquierdo = -6f;
+    private float limiteDerecho = 7f;
+    
+    // Limites del mapa definidos por las paredes
+    private const float WALL_LEFT = -7f;  // Posición Z de la pared izquierda
+    private const float WALL_RIGHT = 8f;  // Posición Z de la pared derecha
+    private const float WALL_PADDING = 0.5f; // Espacio entre la paleta y la pared
 
     [Header("Scale Settings")]
-    [SerializeField] private float maxScaleFactor = 2.0f; // Escala máxima respecto a la original
-    [SerializeField] private float minScaleFactor = 0.5f; // Escala mínima respecto a la original
+    private float maxScaleFactor = 1.75f; // Escala máxima respecto a la original
+    private float minScaleFactor = 0.75f; // Escala mínima respecto a la original
     
     [Header("Shooting Mode")]
     [SerializeField] private Transform leftShootPoint;
@@ -35,9 +37,21 @@ public class PalletController : MonoBehaviour
         initialPosition = transform.position;
         originalScale = transform.localScale;
         
-        // Store original movement limits
-        originalLimiteIzquierdo = limiteIzquierdo;
-        originalLimiteDerecho = limiteDerecho;
+        // Calcular los límites iniciales basados en el tamaño de la paleta
+        CalculateMovementLimits();
+    }
+    
+    // Nueva función para calcular los límites de movimiento
+    private void CalculateMovementLimits()
+    {
+        // Calcular el tamaño medio de la paleta en el eje Z
+        float paddleHalfWidth = transform.localScale.z * 0.5f;
+        
+        // Límites calculados para que la paleta no atraviese las paredes
+        limiteIzquierdo = WALL_LEFT + paddleHalfWidth + WALL_PADDING;
+        limiteDerecho = WALL_RIGHT - paddleHalfWidth - WALL_PADDING;
+        
+        Debug.Log($"Límites de movimiento calculados: Izquierdo={limiteIzquierdo:F2}, Derecho={limiteDerecho:F2}, Tamaño paleta={transform.localScale.z:F2}");
     }
     
     private void Update()
@@ -68,6 +82,9 @@ public class PalletController : MonoBehaviour
     {
         transform.position = initialPosition;
         transform.localScale = originalScale;
+        
+        // Recalcular los límites para la escala original
+        CalculateMovementLimits();
     }
     
     // Método para expandir la paleta gradualmente
@@ -137,8 +154,8 @@ public class PalletController : MonoBehaviour
             // Interpolar entre la escala actual y la objetivo
             transform.localScale = Vector3.Lerp(startScale, targetScale, t);
             
-            // Adjust movement limits based on the current scale
-            AdjustMovementLimits();
+            // Recalcular los límites en cada frame durante el cambio de escala
+            CalculateMovementLimits();
             
             yield return null;
         }
@@ -146,8 +163,8 @@ public class PalletController : MonoBehaviour
         // Asegurar que llegamos exactamente al valor deseado
         transform.localScale = targetScale;
         
-        // Final adjustment of movement limits
-        AdjustMovementLimits();
+        // Asegurar que los límites finales sean correctos
+        CalculateMovementLimits();
         
         Debug.Log($"Escala de la paleta ajustada. Factor actual: {transform.localScale.z / originalScale.z:F2}x");
     }
@@ -257,9 +274,8 @@ public class PalletController : MonoBehaviour
         // Restaurar escala original inmediatamente, sin animación
         transform.localScale = originalScale;
         
-        // Reset movement limits
-        limiteIzquierdo = originalLimiteIzquierdo;
-        limiteDerecho = originalLimiteDerecho;
+        // Recalcular los límites para la escala original
+        CalculateMovementLimits();
         
         Debug.Log("Paleta restaurada a su escala original y límites de movimiento ajustados");
     }
@@ -388,35 +404,10 @@ public class PalletController : MonoBehaviour
         Debug.Log("Modo disparo desactivado en la paleta");
     }
 
-    // Añades este método en PalletController.cs
+    // Añade este método en PalletController.cs
     public void SetBulletPrefab(GameObject prefab)
     {
         bulletPrefab = prefab;
         Debug.Log("Prefab de bala asignado correctamente: " + prefab.name);
-    }
-
-    private void AdjustMovementLimits()
-    {
-        // Calculate the scale ratio compared to the original
-        float scaleRatio = transform.localScale.z / originalScale.z;
-        
-        // Calculate the difference between current and original half-width
-        float originalHalfWidth = originalScale.z * 0.5f;
-        float currentHalfWidth = transform.localScale.z * 0.5f;
-        float widthDifference = currentHalfWidth - originalHalfWidth;
-        
-        // Adjust limits based on whether the paddle has grown or shrunk
-        if (widthDifference >= 0) {
-            // Paddle has grown or stayed the same - restrict movement range
-            limiteIzquierdo = originalLimiteIzquierdo + widthDifference;
-            limiteDerecho = originalLimiteDerecho - widthDifference;
-        } else {
-            // Paddle has shrunk - expand movement range
-            // When the paddle is smaller, it needs more movement range to reach the edges
-            limiteIzquierdo = originalLimiteIzquierdo + widthDifference;
-            limiteDerecho = originalLimiteDerecho - widthDifference;
-        }
-        
-        Debug.Log($"Movement limits adjusted: Left={limiteIzquierdo:F2}, Right={limiteDerecho:F2}, Scale ratio={scaleRatio:F2}");
     }
 }
