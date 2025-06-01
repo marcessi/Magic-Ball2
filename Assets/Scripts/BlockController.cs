@@ -16,12 +16,7 @@ public class BlockController : MonoBehaviour
     private bool enablePowerUps = true;
     private float powerUpChance = 0.3f;
 
-    [Header("Explosion Effect")]
-    [SerializeField] private GameObject explosionEffectPrefab;  // Prefab de partículas para la explosión
-    [SerializeField] private float explosionForce = 10f;       // Fuerza de la explosión
-    [SerializeField] private float explosionRadius = 2f;       // Radio de la explosión
-    [SerializeField] private float explosionLifetime = 1f;     // Duración de la explosión
-
+ 
     
     // Variables para el seguimiento de bloques
     private static int totalBlocksInitial = 0;
@@ -205,7 +200,6 @@ public class BlockController : MonoBehaviour
             Instantiate(breakEffect, transform.position, Quaternion.identity);
         }
 
-        CreateExplosionEffect();
         
         // Visual breaking animation
         Vector3 originalScale = transform.localScale;
@@ -242,75 +236,32 @@ public class BlockController : MonoBehaviour
         // Comprobar si todos los bloques han sido destruidos
         CheckAllBlocksDestroyed();
     }
-    private void CreateExplosionEffect()
+   
+
+    // Corrutina para el fadeout de las partículas
+    private IEnumerator FadeOutAndDestroy(GameObject obj, float duration)
     {
-        // Si no hay prefab de explosión asignado, crear uno básico con partículas
-        if (explosionEffectPrefab == null)
+        Renderer renderer = obj.GetComponent<Renderer>();
+        Color startColor = renderer.material.color;
+        float elapsed = 0f;
+        
+        while (elapsed < duration)
         {
-            // Crear sistema de partículas básico
-            GameObject explosionObj = new GameObject("BlockExplosion");
-            explosionObj.transform.position = transform.position;
+            elapsed += Time.deltaTime;
+            float normalizedTime = elapsed / duration;
             
-            // Añadir sistema de partículas
-            ParticleSystem ps = explosionObj.AddComponent<ParticleSystem>();
-            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            // Reducir el tamaño gradualmente
+            obj.transform.localScale *= (1f - Time.deltaTime * 0.5f);
             
-            // Configuración básica
-            var main = ps.main;
-            main.startColor = new ParticleSystem.MinMaxGradient(Color.yellow, Color.red);
-            main.startSize = new ParticleSystem.MinMaxCurve(0.1f, 0.3f);
-            main.startSpeed = new ParticleSystem.MinMaxCurve(3f, 5f);
-            main.maxParticles = 50;
-            main.duration = 0.5f;
-            main.loop = false;
+            // Reducir la opacidad
+            Color newColor = startColor;
+            newColor.a = Mathf.Lerp(1f, 0f, normalizedTime);
+            renderer.material.color = newColor;
             
-            // Emisión de partículas
-            var emission = ps.emission;
-            emission.rateOverTime = 0;
-            emission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0f, 30, 40) });
-            
-            // Forma
-            var shape = ps.shape;
-            shape.shapeType = ParticleSystemShapeType.Sphere;
-            shape.radius = 0.1f;
-            
-            // Tiempo de vida
-            main.startLifetime = new ParticleSystem.MinMaxCurve(0.3f, 0.8f);
-            
-            // SOLUCIÓN: Asignar un material con shader built-in
-            ParticleSystemRenderer renderer = ps.GetComponent<ParticleSystemRenderer>();
-            if (renderer != null)
-            {
-                // Usar un shader que siempre está incluido en las builds
-                renderer.material = new Material(Shader.Find("Mobile/Particles/Additive"));
-                
-                // Si el anterior falla, probar estos alternativos
-                if (renderer.material == null || renderer.material.shader == null)
-                {
-                    renderer.material = new Material(Shader.Find("Sprites/Default"));
-                }
-            }
-            
-            // Autodestrucción
-            Destroy(explosionObj, explosionLifetime);
-            
-            // Reproducir DESPUÉS de configurar todo
-            ps.Play();
-        }
-        else
-        {
-            // Instanciar el prefab de explosión
-            GameObject explosion = Instantiate(
-                explosionEffectPrefab, 
-                transform.position, 
-                Quaternion.identity
-            );
-            
-            // Asegurar que se destruya después de un tiempo
-            Destroy(explosion, explosionLifetime);
+            yield return null;
         }
         
-        // Aplicar fuerza explosiva a objetos cercanos con físic
+        Destroy(obj);
     }
 
     private void NotifyBlocksAbove()
