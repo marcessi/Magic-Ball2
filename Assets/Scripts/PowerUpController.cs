@@ -65,24 +65,7 @@ public class PowerupController : MonoBehaviour
             ballPrefab = Resources.Load<GameObject>("Prefabs/Ball");
         }
 
-        if (powerupType == PowerupType.Shoot)
-        {
-            // Buscar el prefab de bala
-            GameObject bulletPrefab = Resources.Load<GameObject>("Prefabs/Bullet");
-            Debug.Log("¿Prefab de bala cargado correctamente? " + (bulletPrefab != null ? "SÍ" : "NO"));
-            
-            // Buscar la paleta para asignarle el prefab
-            PalletController paddle = FindObjectOfType<PalletController>();
-            if (paddle != null && bulletPrefab != null)
-            {
-                // Usar reflexión para asignar el prefab (ya que el campo puede ser privado)
-                System.Reflection.FieldInfo field = paddle.GetType().GetField("bulletPrefab", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
-                if (field != null)
-                {
-                    field.SetValue(paddle, bulletPrefab);
-                }
-            }
-        }
+        
         
         Debug.Log($"PowerUp inicializado: {gameObject.name} - Tipo: {powerupType} (Total activos: {BlockController.GetActivePowerUps()})");
     }
@@ -191,31 +174,35 @@ public class PowerupController : MonoBehaviour
             
             
             case PowerupType.SpeedUp:
-                ChangeAllBallsSpeed(2.0f, 20f); // Doble velocidad durante 20 segundos
+                ChangeAllBallsSpeed(1.5f, 20f); // Doble velocidad durante 20 segundos
                 Debug.Log("PowerUp aplicado: Speed Up - Velocidad de la bola aumentada");
                 break;
             
             case PowerupType.SlowDown:
-                ChangeAllBallsSpeed(0.5f, 20f); // Mitad de velocidad durante 20 segundos
+                ChangeAllBallsSpeed(0.75f, 20f); // Mitad de velocidad durante 20 segundos
                 Debug.Log("PowerUp aplicado: Slow Down - Velocidad de la bola reducida");
                 break;
             case PowerupType.Shoot:
                 // Cargar el prefab de bala directamente aquí para asegurarnos
-                GameObject bulletPrefab = Resources.Load<GameObject>("Prefabs/Bullet");
-                
-                if (bulletPrefab != null)
+                if (GameManager.Instance != null)
                 {
-                    // Asignación directa si el campo es público
-                    // O usar SetBulletPrefab si existe un método público
-                    paddle.SetBulletPrefab(bulletPrefab);
-                    
-                    // Activar modo de disparo durante 20 segundos
-                    paddle.ActivateShootMode(20f);
-                    Debug.Log("PowerUp aplicado: Shoot - Disparando balas durante 20 segundos");
+                    // Comprobar si el jugador tiene menos de 3 vidas
+                    if (GameManager.Instance.GetCurrentLives() < 3)
+                    {
+                        // Añadir una vida
+                        GameManager.Instance.AddLife();
+                        Debug.Log("PowerUp aplicado: Heart - Vida extra añadida");
+                    }
+                    else
+                    {
+                        // Si ya tiene el máximo de vidas, solo dar puntos extra
+                        GameManager.Instance.AddPoints(50);
+                        Debug.Log("PowerUp aplicado: Heart - Ya tienes vidas máximas, +50 puntos");
+                    }
                 }
                 else
                 {
-                    Debug.LogError("No se pudo cargar el prefab de bala. Verifica que existe en Resources/Prefabs/Bullet");
+                    Debug.LogError("No se encontró el GameManager para añadir vida");
                 }
                 break;
         }
