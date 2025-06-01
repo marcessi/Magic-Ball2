@@ -316,9 +316,17 @@ public class GameManager : MonoBehaviour
         {
             // Activar el panel
             gameOverPanel.SetActive(true);
-            
+
             // Buscar el TMP_Text para mostrar un mensaje especial
-            
+            TMP_Text scoreTextUI = gameOverPanel.GetComponentInChildren<TMP_Text>();
+            if (scoreTextUI != null)
+            {
+                scoreTextUI.text = "¡Victory! " + currentScore;
+            }
+            else
+            {
+                Debug.LogWarning("No se encontró TMP_Text en el GameOverPanel");
+            }
             
             // Buscar el GameOverPanelController para configurarlo adecuadamente
             GameOverPanelController controller = gameOverPanel.GetComponent<GameOverPanelController>();
@@ -356,10 +364,14 @@ public class GameManager : MonoBehaviour
     {
         // Reiniciar la puntuación al comenzar un nuevo nivel
         currentScore = 0;
+
+        ResetGameState();
+        BlockController.ResetLevelCounters();
+
         UpdateScoreUI();
 
         // Cargar la escena del nivel actual
-        SceneManager.LoadScene(currentLevel);
+        SceneManager.LoadScene(1);
     }
     
     // Método para volver al menú principal

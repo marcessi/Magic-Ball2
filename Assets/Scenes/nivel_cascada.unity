@@ -4222,7 +4222,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5105222001935492314, guid: 40ed6ccae6f9d56478e8ffe44026b45d, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
-      value: 0
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5105222001935492314, guid: 40ed6ccae6f9d56478e8ffe44026b45d, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 258479315}
+    - target: {fileID: 5105222001935492314, guid: 40ed6ccae6f9d56478e8ffe44026b45d, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: RestartGame
+      objectReference: {fileID: 0}
+    - target: {fileID: 5105222001935492314, guid: 40ed6ccae6f9d56478e8ffe44026b45d, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: GameOverPanelController, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 5105222001935492314, guid: 40ed6ccae6f9d56478e8ffe44026b45d, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
       objectReference: {fileID: 0}
     - target: {fileID: 5581052482289714763, guid: 40ed6ccae6f9d56478e8ffe44026b45d, type: 3}
       propertyPath: m_Enabled
@@ -4342,6 +4358,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 7995304786006121860, guid: 40ed6ccae6f9d56478e8ffe44026b45d, type: 3}
   m_PrefabInstance: {fileID: 258479313}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &258479315 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: -5186286654373392865, guid: 40ed6ccae6f9d56478e8ffe44026b45d, type: 3}
+  m_PrefabInstance: {fileID: 258479313}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 130ebc57765f0d64596aeb750303b861, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &274564763 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 9019943894639304035, guid: a7a9ccf47d898ed46a7accd9a7386477, type: 3}
@@ -11442,6 +11469,7 @@ GameObject:
   - component: {fileID: 684716529}
   - component: {fileID: 684716530}
   - component: {fileID: 684716531}
+  - component: {fileID: 684716532}
   m_Layer: 6
   m_Name: Ball
   m_TagString: Ball
@@ -11585,6 +11613,20 @@ MonoBehaviour:
   hitWallSound: {fileID: 8300000, guid: 3e52807458fdd62418468f6ea6b2c2d3, type: 3}
   breakBallSound: {fileID: 0}
   isAttachedToPaddle: 0
+--- !u!114 &684716532
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 684716521}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95ee71613e4b41c4d985d68e12f3ca9b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  scrollSpeedX: 0.5
+  scrollSpeedY: 0
 --- !u!1001 &687607747
 PrefabInstance:
   m_ObjectHideFlags: 0
