@@ -343,13 +343,26 @@ public class GameManager : MonoBehaviour
         }
     }
     
+    public void AddLife()
+    {
+        // Solo añadir vida si no está al máximo
+        if (currentLives < maxLives)
+        {
+            currentLives++;
+            Debug.Log("Vida añadida. Vidas actuales: " + currentLives);
+            
+            // Actualizar la UI
+            UpdateUI();
+        }
+    }
+    
     // Método para reiniciar el nivel currentLevel
     public void RestartLevel()
     {
         // Reiniciar la puntuación al comenzar un nuevo nivel
         currentScore = 0;
         UpdateScoreUI();
-        
+
         // Cargar la escena del nivel actual
         SceneManager.LoadScene(currentLevel);
     }
