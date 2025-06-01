@@ -318,12 +318,7 @@ public class GameManager : MonoBehaviour
             gameOverPanel.SetActive(true);
             
             // Buscar el TMP_Text para mostrar un mensaje especial
-            TMP_Text scoreTextUI = gameOverPanel.GetComponentInChildren<TMP_Text>();
-            if (scoreTextUI != null)
-            {
-                // Mensaje especial de victoria
-                scoreTextUI.text = "¡VICTORIA FINAL!\nPuntuación: " + currentScore;
-            }
+            
             
             // Buscar el GameOverPanelController para configurarlo adecuadamente
             GameOverPanelController controller = gameOverPanel.GetComponent<GameOverPanelController>();
@@ -689,6 +684,12 @@ public class GameManager : MonoBehaviour
         }
     }
     
+    private void ResetChangingLevelFlag()
+    {
+        isChangingLevel = false;
+        Debug.Log("Bandera de cambio de nivel restablecida a false");
+    }
+
     // Method to directly jump to a specific level
     public void PlayLevel(int levelIndex)
     {
@@ -698,26 +699,28 @@ public class GameManager : MonoBehaviour
             Debug.Log("Cannot switch levels while game is paused or in menu/victory/defeat screens");
             return;
         }
-        
+
         // Make sure the level exists in build settings
         if (levelIndex >= 1 && levelIndex < SceneManager.sceneCountInBuildSettings)
         {
             Debug.Log($"Loading level {levelIndex} directly via keyboard shortcut");
-            
+
             // Reset block counters before loading
             BlockController.ResetLevelCounters();
-            
+
             // Update the current level
             currentLevel = levelIndex;
-            
+
             // Set flag for level change
             isChangingLevel = true;
-            
+
             // Make sure time scale is normal
             Time.timeScale = 1f;
-            
+
             // Load the selected level
             SceneManager.LoadScene(levelIndex);
+
+            Invoke("ResetChangingLevelFlag", 3f);
         }
         else
         {
