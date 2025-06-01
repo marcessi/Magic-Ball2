@@ -16025,6 +16025,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 972817801}
     m_Modifications:
+    - target: {fileID: 524996197507641465, guid: 40ed6ccae6f9d56478e8ffe44026b45d, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: debe894442e153d479c7f9d07cce1276, type: 2}
+    - target: {fileID: 524996197507641465, guid: 40ed6ccae6f9d56478e8ffe44026b45d, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: 21975412471922176, guid: debe894442e153d479c7f9d07cce1276, type: 2}
+    - target: {fileID: 524996197507641465, guid: 40ed6ccae6f9d56478e8ffe44026b45d, type: 3}
+      propertyPath: m_hasFontAssetChanged
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1770526314404440827, guid: 40ed6ccae6f9d56478e8ffe44026b45d, type: 3}
       propertyPath: m_Color.g
       value: 0
@@ -16164,6 +16176,14 @@ PrefabInstance:
     - target: {fileID: 8599564362442439441, guid: 40ed6ccae6f9d56478e8ffe44026b45d, type: 3}
       propertyPath: m_Color.r
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8789681779506161866, guid: 40ed6ccae6f9d56478e8ffe44026b45d, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: debe894442e153d479c7f9d07cce1276, type: 2}
+    - target: {fileID: 8789681779506161866, guid: 40ed6ccae6f9d56478e8ffe44026b45d, type: 3}
+      propertyPath: m_hasFontAssetChanged
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
