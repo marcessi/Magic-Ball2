@@ -23,6 +23,7 @@ public class BallController : MonoBehaviour
     [SerializeField] private AudioClip hitBlockSound;
     [SerializeField] private AudioClip hitPaddleSound;
     [SerializeField] private AudioClip hitWallSound;
+    [SerializeField] private AudioClip breakBallSound; // Nuevo sonido para romper la bola
 
     private Rigidbody rb;
     private bool gameStarted = false;
@@ -82,6 +83,8 @@ public class BallController : MonoBehaviour
             hitPaddleSound = Resources.Load<AudioClip>("Audio/rebote");
         if (hitWallSound == null)
             hitWallSound = Resources.Load<AudioClip>("Audio/hit-pared");
+        if (breakBallSound == null)
+            breakBallSound = Resources.Load<AudioClip>("Audio/romper-bola"); // Cargar sonido de romper bola
     }
 
     private void Start()
@@ -187,6 +190,11 @@ public class BallController : MonoBehaviour
         else if (collision.gameObject.GetComponent<PalletController>() != null)
         {
             PlaySound(hitPaddleSound);
+        }
+        // Check for collision with lower limit
+        else if (collision.gameObject.GetComponent<LimitController>() != null)
+        {
+            PlaySound(breakBallSound);
         }
         // For all other collisions (walls, etc.)
         else
@@ -543,6 +551,10 @@ public class BallController : MonoBehaviour
             else if (clip == hitBlockSound)
             {
                 volume = 0.3f;
+            }
+            else if (clip == breakBallSound) // Control de volumen para romper bola
+            {
+                volume = 0.5f;
             }
             
             // Use AudioManager to play the sound instead of playing directly
