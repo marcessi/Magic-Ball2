@@ -57,7 +57,7 @@ public class GameManager : MonoBehaviour
             {
                 musicSource = gameObject.AddComponent<AudioSource>();
                 musicSource.loop = true;
-                musicSource.volume = 0.3f; // Inicializar con volumen para menú principal
+                musicSource.volume = 0.2f; // Inicializar con volumen para menú principal
             }
         }
         else
@@ -556,7 +556,7 @@ public class GameManager : MonoBehaviour
             if (levelMusic != null)
             {
                 musicSource.clip = levelMusic;
-                musicSource.volume = 0.15f; // Establecer volumen a 0.15 para música de niveles
+                musicSource.volume = 0.1f; // Establecer volumen a 0.1 para música de niveles
                 musicSource.Play();
                 Debug.Log($"Reproduciendo música: {levelMusicTracks[musicIndex]} con volumen: 0.25");
             }
@@ -580,7 +580,7 @@ public class GameManager : MonoBehaviour
         if (menuMusic != null)
         {
             musicSource.clip = menuMusic;
-            musicSource.volume = 0.4f; // Establecer volumen a 0.4 para música del menú principal
+            musicSource.volume = 0.15f; // Establecer volumen a 0.4 para música del menú principal
             musicSource.Play();
             Debug.Log($"Reproduciendo música del menú principal: {mainMenuMusicTrack} con volumen: 0.4");
         }
@@ -613,7 +613,7 @@ public class GameManager : MonoBehaviour
             // Usar la misma fuente de audio para el sonido de victoria
             musicSource.clip = victoryClip;
             musicSource.loop = false; // Sin bucle para sonidos de victoria
-            musicSource.volume = 0.25f; // Mantener volumen apropiado para efectos
+            musicSource.volume = 0.2f; // Mantener volumen apropiado para efectos
             musicSource.Play();
             
             Debug.Log($"Reproduciendo sonido de victoria: {victoryAudioTrack} con volumen: 0.25");
@@ -638,7 +638,7 @@ public class GameManager : MonoBehaviour
             // Usar la misma fuente de audio para el sonido de derrota
             musicSource.clip = gameOverClip;
             musicSource.loop = false; // Sin bucle para sonidos de derrota
-            musicSource.volume = 0.25f; // Mantener volumen apropiado para efectos
+            musicSource.volume = 0.2f; // Mantener volumen apropiado para efectos
             musicSource.Play();
             
             Debug.Log($"Reproduciendo sonido de game over: {gameOverAudioTrack} con volumen: 0.25");
