@@ -1,7 +1,8 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro;
-using UnityEngine.UI; // Añadir este namespace para usar Image
+using UnityEngine.UI;
+using System.Collections;
 
 public class GameManager : MonoBehaviour
 {
@@ -24,6 +25,24 @@ public class GameManager : MonoBehaviour
     private bool isPaused = false;                    // Variable faltante
     private bool isChangingLevel = false;            // Nueva variable para controlar cambio de nivel
     
+    [Header("Audio")]
+    [SerializeField] private AudioSource musicSource;
+    [SerializeField] private string mainMenuMusicTrack = "Audio/MainMenu";
+    private string[] levelMusicTracks = {
+        "Audio/Musica-Puente",
+        "Audio/Musica-Iglu",
+        "Audio/Musica-Cascada",
+        "Audio/Musica-Volcan",
+        "Audio/Musica-Piramide"
+    };
+    [SerializeField] private string victoryAudioTrack = "Audio/Victory";
+    [SerializeField] private string gameOverAudioTrack = "Audio/GameOver";
+    
+    // Variables para recordar la música actual
+    private AudioClip currentMusicClip;
+    private float currentMusicTime;
+    private bool isMusicPaused = false;
+    
     private void Awake()
     {
         // Configuración del singleton
@@ -32,6 +51,14 @@ public class GameManager : MonoBehaviour
             Instance = this;
             DontDestroyOnLoad(gameObject);
             InitializeGame();
+            
+            // Configurar fuente de audio si no existe
+            if (musicSource == null)
+            {
+                musicSource = gameObject.AddComponent<AudioSource>();
+                musicSource.loop = true;
+                musicSource.volume = 0.4f;
+            }
         }
         else
         {
@@ -73,6 +100,9 @@ public class GameManager : MonoBehaviour
             {
                 gameInProgress = false;
             }
+            
+            // Reproducir música del menú principal
+            PlayMainMenuMusic();
         }
         else // Si es una escena de nivel
         {
@@ -82,6 +112,9 @@ public class GameManager : MonoBehaviour
                 ResetGameState();
                 gameInProgress = true;
             }
+            
+            // Reproducir música del nivel actual
+            PlayLevelMusic();
         }
         
         // Ocultar todos los paneles
@@ -150,6 +183,9 @@ public class GameManager : MonoBehaviour
         PlayerPrefs.SetInt("CurrentScore", currentScore);
         PlayerPrefs.Save();
         
+        // Reproducir sonido de Game Over
+        PlayGameOverSound();
+        
         // Mostrar el GameOver
         ShowGameOverMenu();
         
@@ -202,6 +238,9 @@ public class GameManager : MonoBehaviour
         
         // PRIMERO: Asegurar que el tiempo esté corriendo
         Time.timeScale = 1f;
+        
+        // Reproducir sonido de victoria
+        PlayVictorySound();
         
         // Mostrar panel de victoria si existe
         if (victoryPanel != null)
@@ -473,6 +512,112 @@ public class GameManager : MonoBehaviour
                 
                 Debug.Log("MenuController configurado con éxito");
             }
+        }
+    }
+    
+    // Método para reproducir la música correspondiente al nivel
+    private void PlayLevelMusic()
+    {
+        // Verificar que el nivel sea válido para nuestro array de música
+        // Los niveles empiezan en 1 (index 0 es menú), así que restamos 1 para el array
+        int musicIndex = currentLevel - 1;
+        
+        if (musicIndex >= 0 && musicIndex < levelMusicTracks.Length)
+        {
+            // Cargar y reproducir la música
+            AudioClip levelMusic = Resources.Load<AudioClip>(levelMusicTracks[musicIndex]);
+            
+            if (levelMusic != null)
+            {
+                musicSource.clip = levelMusic;
+                musicSource.Play();
+                Debug.Log($"Reproduciendo música: {levelMusicTracks[musicIndex]}");
+            }
+            else
+            {
+                Debug.LogWarning($"No se pudo cargar la música: {levelMusicTracks[musicIndex]}");
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"No hay música configurada para el nivel {currentLevel}");
+        }
+    }
+    
+    // Método para reproducir la música del menú principal
+    private void PlayMainMenuMusic()
+    {
+        // Cargar y reproducir la música del menú principal
+        AudioClip menuMusic = Resources.Load<AudioClip>(mainMenuMusicTrack);
+        
+        if (menuMusic != null)
+        {
+            musicSource.clip = menuMusic;
+            musicSource.Play();
+            Debug.Log($"Reproduciendo música del menú principal: {mainMenuMusicTrack}");
+        }
+        else
+        {
+            Debug.LogWarning($"No se pudo cargar la música del menú principal: {mainMenuMusicTrack}");
+        }
+    }
+    
+    // Método para detener la música
+    private void StopMusic()
+    {
+        if (musicSource != null && musicSource.isPlaying)
+        {
+            musicSource.Stop();
+        }
+    }
+    
+    // Método para reproducir sonido de victoria
+    private void PlayVictorySound()
+    {
+        // Detener cualquier música que esté sonando
+        StopMusic();
+        
+        // Cargar y reproducir el sonido de victoria
+        AudioClip victoryClip = Resources.Load<AudioClip>(victoryAudioTrack);
+        
+        if (victoryClip != null)
+        {
+            // Usar la misma fuente de audio para el sonido de victoria
+            musicSource.clip = victoryClip;
+            musicSource.loop = false; // Sin bucle para sonidos de victoria
+            musicSource.Play();
+            
+            Debug.Log($"Reproduciendo sonido de victoria: {victoryAudioTrack}");
+            
+            // Ya no restauramos la música - se reproducirá la del menú principal cuando volvamos allí
+        }
+        else
+        {
+            Debug.LogWarning($"No se pudo cargar el sonido de victoria: {victoryAudioTrack}");
+        }
+    }
+    
+    // Método para reproducir sonido de game over
+    private void PlayGameOverSound()
+    {
+        // Detener cualquier música que esté sonando
+        StopMusic();
+        
+        // Cargar y reproducir el sonido de game over
+        AudioClip gameOverClip = Resources.Load<AudioClip>(gameOverAudioTrack);
+        
+        if (gameOverClip != null)
+        {
+            // Usar la misma fuente de audio para el sonido de derrota
+            musicSource.clip = gameOverClip;
+            musicSource.loop = false; // Sin bucle para sonidos de derrota
+            musicSource.Play();
+            
+            Debug.Log($"Reproduciendo sonido de game over: {gameOverAudioTrack}");
+        }
+        else
+        {
+            Debug.LogWarning($"No se pudo cargar el sonido de game over: {gameOverAudioTrack}");
         }
     }
 }

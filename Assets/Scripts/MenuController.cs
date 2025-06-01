@@ -132,7 +132,7 @@ public class MenuController : MonoBehaviour
             }
             else
             {
-                highScoreText.text = "¡Sé el primero en jugar!";
+                highScoreText.text = "¡Se el primero en jugar!";
             }
         }
     }
@@ -354,10 +354,9 @@ public class MenuController : MonoBehaviour
 
         m_Open = anim;
         m_Open.SetBool(m_OpenParameterId, true);
-
-        GameObject go = FindFirstEnabledSelectable(anim.gameObject);
-
-        SetSelected(go);
+        
+        // No seleccionar nada automáticamente
+        EventSystem.current.SetSelectedGameObject(null);
     }
 
     // Encontrar el primer seleccionable habilitado
@@ -381,7 +380,7 @@ public class MenuController : MonoBehaviour
             return;
 
         m_Open.SetBool(m_OpenParameterId, false);
-        SetSelected(m_PreviouslySelected);
+        EventSystem.current.SetSelectedGameObject(null);
         StartCoroutine(DisablePanelDelayed(m_Open));
         m_Open = null;
     }
@@ -403,12 +402,6 @@ public class MenuController : MonoBehaviour
 
         if (wantToClose)
             anim.gameObject.SetActive(false);
-    }
-
-    // Establecer el objeto seleccionado
-    private void SetSelected(GameObject go)
-    {
-        EventSystem.current.SetSelectedGameObject(go);
     }
     
     // FUNCIONES PARA EL PANEL DE ENTRADA DE NOMBRE

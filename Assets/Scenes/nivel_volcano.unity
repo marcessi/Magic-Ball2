@@ -16225,6 +16225,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: GameOverPanel
       objectReference: {fileID: 0}
+    - target: {fileID: 8285214833574828270, guid: 40ed6ccae6f9d56478e8ffe44026b45d, type: 3}
+      propertyPath: m_Color.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8285214833574828270, guid: 40ed6ccae6f9d56478e8ffe44026b45d, type: 3}
+      propertyPath: m_Color.r
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8599564362442439441, guid: 40ed6ccae6f9d56478e8ffe44026b45d, type: 3}
+      propertyPath: m_Color.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8599564362442439441, guid: 40ed6ccae6f9d56478e8ffe44026b45d, type: 3}
+      propertyPath: m_Color.r
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
