@@ -90,7 +90,7 @@ public class BallController : MonoBehaviour
     private void Start()
     {
         startPosition = new Vector3(-9.3f, 0, 0.5f); // Posición inicial de la bola
-
+  
         // Initialize ball at rest
         if (rb != null)
         {

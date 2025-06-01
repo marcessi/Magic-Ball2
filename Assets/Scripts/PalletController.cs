@@ -7,6 +7,11 @@ public class PalletController : MonoBehaviour
     private float velocidad = 15f;
     private float limiteIzquierdo = -6f;
     private float limiteDerecho = 7f;
+
+ 
+
+    [Header("Collision Settings")]
+    private BoxCollider paddleCollider;
     
     // Limites del mapa definidos por las paredes
     private const float WALL_LEFT = -7f;  // Posición Z de la pared izquierda
@@ -36,9 +41,33 @@ public class PalletController : MonoBehaviour
         // Store initial position and scale
         initialPosition = transform.position;
         originalScale = transform.localScale;
+
+        paddleCollider = GetComponent<BoxCollider>();
+        if (paddleCollider == null)
+        {
+            paddleCollider = gameObject.AddComponent<BoxCollider>();
+        }
+        
+        // Asegurar que el collider tenga el tamaño correcto
+        UpdateColliderSize();
         
         // Calcular los límites iniciales basados en el tamaño de la paleta
         CalculateMovementLimits();
+    }
+    
+    private void UpdateColliderSize()
+    {
+        if (paddleCollider != null)
+        {
+            // IMPORTANTE: Usar la escala relativa para la dimensión Z del collider
+            float relativeZScale = transform.localScale.z / originalScale.z;
+            paddleCollider.size = new Vector3(1, 0.5f, relativeZScale);
+            
+            // No es necesario ajustar el centro si el pivot está en el centro
+            paddleCollider.center = Vector3.zero;
+            
+            Debug.Log($"Collider ajustado al tamaño de la paleta: {paddleCollider.size}, Escala relativa Z: {relativeZScale}");
+        }
     }
     
     // Nueva función para calcular los límites de movimiento
@@ -46,11 +75,11 @@ public class PalletController : MonoBehaviour
     {
         // Calcular el tamaño medio de la paleta en el eje Z
         float paddleHalfWidth = transform.localScale.z * 0.5f;
-        
+
         // Límites calculados para que la paleta no atraviese las paredes
         limiteIzquierdo = WALL_LEFT + paddleHalfWidth + WALL_PADDING;
         limiteDerecho = WALL_RIGHT - paddleHalfWidth - WALL_PADDING;
-        
+
         Debug.Log($"Límites de movimiento calculados: Izquierdo={limiteIzquierdo:F2}, Derecho={limiteDerecho:F2}, Tamaño paleta={transform.localScale.z:F2}");
     }
     
@@ -62,13 +91,33 @@ public class PalletController : MonoBehaviour
         // Mover la paleta en el eje Z mundial usando entrada horizontal invertida
         transform.Translate(Vector3.forward * movimientoHorizontal * velocidad * Time.deltaTime);
         
-        // Aplicar límites en coordenadas mundiales
+        // NUEVO: Calcular el tamaño actual de la paleta (mitad del ancho)
+        float halfPaddleWidth = transform.localScale.z * 0.5f;
+        
+        // IMPORTANTE: Calcular los límites ajustados aquí (estaban faltando)
+        float adjustedLeftLimit = WALL_LEFT + halfPaddleWidth + WALL_PADDING;
+        float adjustedRightLimit = WALL_RIGHT - halfPaddleWidth - WALL_PADDING;
+        
+        // MODIFICADO: Aplicar límites teniendo en cuenta el tamaño actual de la paleta
         Vector3 posicionActual = transform.position;
         
-        // Aplicar límite a la coordenada Z en el espacio mundial
-        posicionActual.z = Mathf.Clamp(posicionActual.z, limiteIzquierdo, limiteDerecho);
+        // Asegurar que los límites no se crucen si la paleta es muy grande
+        if (adjustedLeftLimit > adjustedRightLimit)
+        {
+            // Si la paleta es demasiado grande, centrarla
+            posicionActual.z = (WALL_LEFT + WALL_RIGHT) / 2;
+        }
+        else
+        {
+            // Aplicar los límites ajustados
+            posicionActual.z = Mathf.Clamp(posicionActual.z, adjustedLeftLimit, adjustedRightLimit);
+        }
         
         transform.position = posicionActual;
+        
+        // NUEVO: Actualizar los límites almacenados para que otros métodos los usen
+        limiteIzquierdo = adjustedLeftLimit;
+        limiteDerecho = adjustedRightLimit;
     }
     
     // Este método será llamado por el Input System cuando ocurra un movimiento
@@ -154,6 +203,8 @@ public class PalletController : MonoBehaviour
             // Interpolar entre la escala actual y la objetivo
             transform.localScale = Vector3.Lerp(startScale, targetScale, t);
             
+            UpdateColliderSize();
+
             // Recalcular los límites en cada frame durante el cambio de escala
             CalculateMovementLimits();
             
@@ -162,6 +213,8 @@ public class PalletController : MonoBehaviour
         
         // Asegurar que llegamos exactamente al valor deseado
         transform.localScale = targetScale;
+
+        UpdateColliderSize();
         
         // Asegurar que los límites finales sean correctos
         CalculateMovementLimits();
@@ -274,6 +327,7 @@ public class PalletController : MonoBehaviour
         // Restaurar escala original inmediatamente, sin animación
         transform.localScale = originalScale;
         
+        UpdateColliderSize();
         // Recalcular los límites para la escala original
         CalculateMovementLimits();
         
